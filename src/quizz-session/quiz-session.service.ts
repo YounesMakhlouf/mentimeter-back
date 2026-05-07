@@ -40,11 +40,10 @@ export class QuizSessionService {
 
     joinQuiz(quizCode: string, socketId: string, playerName: string, avatar: string): boolean {
         const quiz = this.quizSessions.get(quizCode);
-        if (quiz) {
-            quiz.players.push({pseudo: playerName, avatar: avatar, answers: [], score: 0, socketId});
-            return true;
-        }
-        return false;
+        if (!quiz) return false;
+        if (quiz.players.some(p => p.socketId === socketId)) return false;
+        quiz.players.push({pseudo: playerName, avatar: avatar, answers: [], score: 0, socketId});
+        return true;
     }
 
     startQuiz(quizCode: string): any[] {

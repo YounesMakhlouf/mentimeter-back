@@ -1,4 +1,4 @@
-import { ConnectedSocket, MessageBody, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
+import { ConnectedSocket, MessageBody, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
 import { QuizSessionService } from "./quiz-session.service";
 import { JwtService } from "@nestjs/jwt";
@@ -7,8 +7,10 @@ import { Repository } from "typeorm";
 import { User } from "../users/entities/user.entity";
 import { PayloadInterface } from "../authentication/Interfaces/payload.interface";
 
+const QUESTION_DURATION_MS = 10_000;
+
 @WebSocketGateway(3001, { cors: { origin: "*" } })
-export class QuizSessionGateway implements OnGatewayInit {
+export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
@@ -17,6 +19,15 @@ export class QuizSessionGateway implements OnGatewayInit {
     private readonly jwtService: JwtService,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
   ) {
+  }
+
+  handleDisconnect(client: Socket): void {
+    for (const [code, session] of this.quizSessionService.quizSessions) {
+      if (session.ownerSocketId === client.id) {
+        this.server.to(code).emit("sessionEnded", { reason: "host disconnected" });
+        this.quizSessionService.remove(code);
+      }
+    }
   }
 
   afterInit(server: Server): void {
@@ -52,7 +63,10 @@ export class QuizSessionGateway implements OnGatewayInit {
         const result: Record<string, unknown> = {};
         this.quizSessionService.findAll().forEach((session, code) => {
             if (session.owner?.email === user.email) {
-                result[code] = session;
+                // Strip non-serializable / sensitive fields before sending over the wire.
+                const { pendingTimer: _t, owner, ...rest } = session;
+                const safeOwner = owner ? { ...owner, password: undefined } : undefined;
+                result[code] = { ...rest, owner: safeOwner };
             }
         });
         client.emit('findAllQuizSession', result);
@@ -109,10 +123,11 @@ export class QuizSessionGateway implements OnGatewayInit {
       if (isLast) {
         const resultArray = this.quizSessionService.processLeaderboard(quizCode);
         this.server.to(quizCode).emit("endQuiz", resultArray);
+        this.quizSessionService.remove(quizCode);
       } else {
         this.sendQuestion({ quizCode, questionNumber: questionNumber + 1 });
       }
-    }, 10000);
+    }, QUESTION_DURATION_MS);
   }
 
     sendLeaderboard(quizCode: string, leaderboard: any) {
@@ -139,8 +154,8 @@ export class QuizSessionGateway implements OnGatewayInit {
      }
  */
   getScore(validity: boolean, questionStartTime: number): number {
-    const timeLeft = Math.max(0, 20 - ((Date.now() - questionStartTime) / 1000));
-    return validity ? timeLeft * 10 : 0;
+    const timeLeftMs = Math.max(0, QUESTION_DURATION_MS - (Date.now() - questionStartTime));
+    return validity ? (timeLeftMs / 1000) * 10 : 0;
   }
 
   @SubscribeMessage("getAnswer")
