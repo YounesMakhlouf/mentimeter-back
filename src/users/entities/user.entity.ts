@@ -12,9 +12,6 @@ export class User {
   @Column({ nullable: true })
   password?: string; // Remember to hash and salt this
 
-  @Column({ nullable: true })
-  googleId?: string;
-
   @OneToMany(
     ()=>Quiz,
     (quiz:Quiz)=>quiz.user

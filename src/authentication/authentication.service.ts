@@ -1,12 +1,10 @@
-import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { Repository } from "typeorm";
 import { User } from "../users/entities/user.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { CreateUserDto } from "../users/dto/create-user.dto";
 import * as bcrypt from 'bcrypt';
-import { response } from "express";
 import { JwtService } from "@nestjs/jwt";
-import * as jwt from 'jsonwebtoken'
 import { isAlphanumeric } from "class-validator";
 
 @Injectable()
@@ -73,35 +71,5 @@ export class AuthenticationService {
     }
   }
 
-  async googleLogin(req:any) {
-    if (!req.user) {
-      throw new InternalServerErrorException("an error occured while connecting to google ! ")
-    }
-    let user_info = req.user
-    let existUser:User=await this.userRepository.findOneBy({email:user_info.email})
-    if(!existUser){
-      let user: User = new User();
-      user.email = user_info.email;
-      user.googleId = user_info.id;
-      await this.userRepository.save(user)
-    }
-    let email=existUser?existUser.email:user_info.email;
-    let payload={
-      email:email,
-    }
-    let i:number=0
-    let username:string=""
-    while( i < email.length && isAlphanumeric(email[i])) {
-      username+=email[i];
-      i++;
-    }
-    const jwt:string=this.jwtService.sign(payload);
-    return{
-      "accessToken":jwt,
-      "username":username,
-
-    }
-
-  }
 }
 
