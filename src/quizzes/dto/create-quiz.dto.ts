@@ -1,19 +1,20 @@
-import {IsEnum, IsNotEmpty} from "class-validator";
-import {Topic, Topics} from "../topics.enum";
-import {Column, DeleteDateColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn} from "typeorm";
-import {User} from "../../users/entities/user.entity";
-import {Question} from "../../questions/entities/question.entity";
+import { Type } from "class-transformer";
+import { ArrayMinSize, IsArray, IsEnum, IsNotEmpty, IsString, ValidateNested } from "class-validator";
+import { Topic, Topics } from "../topics.enum";
+import { CreateQuestionDto } from "../../questions/dto/create-question.dto";
 
 export class CreateQuizDto {
-    id: string;
+  @IsString()
+  @IsNotEmpty()
+  name: string;
 
-    name:string
+  @IsEnum(Topics)
+  @IsNotEmpty()
+  topic: Topic;
 
-    user:User
-
-    questions:Question[]
-    @IsEnum(Topics)
-    @IsNotEmpty()
-    topic?: Topic
-
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateQuestionDto)
+  @ArrayMinSize(1)
+  questions: CreateQuestionDto[];
 }

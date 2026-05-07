@@ -1,4 +1,5 @@
-import { ConnectedSocket, MessageBody, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer, WsResponse } from "@nestjs/websockets";
+import { ConnectedSocket, MessageBody, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException, WsResponse } from "@nestjs/websockets";
+import { UsePipes, ValidationPipe } from "@nestjs/common";
 import { Server, Socket } from "socket.io";
 import { QuizSessionService } from "./quiz-session.service";
 import { JwtService } from "@nestjs/jwt";
@@ -7,10 +8,19 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { User } from "../users/entities/user.entity";
 import { PayloadInterface } from "../authentication/Interfaces/payload.interface";
+import { CreateQuizSessionDto } from "./dto/create-quiz-session.dto";
+import { JoinQuizDto } from "./dto/join-quiz.dto";
+import { SendQuestionDto } from "./dto/send-question.dto";
+import { GetAnswerDto } from "./dto/get-answer.dto";
 
 const QUESTION_DURATION_MS = 10_000;
 
 @WebSocketGateway(3001, { cors: { origin: "*" } })
+@UsePipes(new ValidationPipe({
+  whitelist: true,
+  transform: true,
+  exceptionFactory: (errors) => new WsException(errors),
+}))
 export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
@@ -73,8 +83,7 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
         return { event: 'findAllQuizSession', data };
     }
 
-    @SubscribeMessage('joinQuiz') handleJoinQuiz(@MessageBody() data: any, @ConnectedSocket() client: Socket): void {
-        // we should save the quiz code in the front
+    @SubscribeMessage('joinQuiz') handleJoinQuiz(@MessageBody() data: JoinQuizDto, @ConnectedSocket() client: Socket): void {
         const {quizCode, playerName, avatar} = data;
         const result = this.quizSessionService.joinQuiz(quizCode, client.id, playerName, avatar);
 
@@ -89,7 +98,7 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
     }
 
   @SubscribeMessage("sendQuestion")
-  sendQuestion(@MessageBody() data: any, @ConnectedSocket() client?: Socket): void {
+  sendQuestion(@MessageBody() data: SendQuestionDto, @ConnectedSocket() client?: Socket): void {
     const { quizCode, questionNumber } = data;
     const quiz = this.quizSessionService.quizSessions.get(quizCode);
     if (!quiz) {
@@ -135,14 +144,13 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
     }
 
     @SubscribeMessage("createQuizSession")
-    async handleCreateQuizSession(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
+    async handleCreateQuizSession(@MessageBody() data: CreateQuizSessionDto, @ConnectedSocket() client: Socket) {
         const user = client.data.user as User | undefined;
         if (!user) {
             client.emit("errorMsg", "authentication required to create a quiz session");
             return;
         }
-        const {quizId} = data;
-        const session = await this.quizSessionService.createQuiz(quizId, user.email, client.id);
+        const session = await this.quizSessionService.createQuiz(data.quizId, user.email, client.id);
         client.emit("QuizCreationSuccess", session);
         return client.emit("createQuizSession", session);
     }
@@ -159,7 +167,7 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
   }
 
   @SubscribeMessage("getAnswer")
-  getAnswer(@MessageBody() data: any, @ConnectedSocket() client: Socket): void {
+  getAnswer(@MessageBody() data: GetAnswerDto, @ConnectedSocket() client: Socket): void {
     const { quizCode, answer, questionNumber } = data;
     const quiz = this.quizSessionService.quizSessions.get(quizCode);
     if (!quiz) {

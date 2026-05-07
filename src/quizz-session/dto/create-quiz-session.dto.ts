@@ -1,7 +1,7 @@
-import {Quiz} from "../../quizzes/entities/quiz.entity";
-import {User} from "../../users/entities/user.entity";
+import { IsNotEmpty, IsUUID } from "class-validator";
 
 export class CreateQuizSessionDto {
-    quiz : Quiz;
-    owner : User;
+  @IsUUID()
+  @IsNotEmpty()
+  quizId: string;
 }

@@ -1,13 +1,20 @@
-import {Option} from "../../options/entities/option.entity";
-import { ArrayMaxSize, IsArray, IsNotEmpty, IsString, ValidateNested } from 'class-validator'
+import { Type } from "class-transformer";
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsNotEmpty, IsString, ValidateNested } from "class-validator";
+import { CreateOptionDto } from "../../options/dto/create-option.dto";
 
 export class CreateQuestionDto {
-    @IsString()
-    @IsNotEmpty()
-    question: string
+  @IsString()
+  @IsNotEmpty()
+  question: string;
 
-    @IsArray()
-    @ValidateNested({ each: true })
-    @ArrayMaxSize(4)
-    options: Option[]
+  @IsString()
+  @IsNotEmpty()
+  correctAnswer: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateOptionDto)
+  @ArrayMinSize(2)
+  @ArrayMaxSize(4)
+  options: CreateOptionDto[];
 }
