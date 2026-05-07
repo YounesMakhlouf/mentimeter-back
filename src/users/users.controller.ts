@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, NotFoundException, UseGuards } from "@nestjs/common";
+import { Controller, Get, Body, Patch, Param, Delete, NotFoundException, ForbiddenException, UseGuards } from "@nestjs/common";
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from "../authentication/Guards/jwt-auth.guard";
+import { CurrentUser } from "../authentication/decorators/current-user.decorator";
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -11,16 +11,18 @@ export class UsersController {
 
 
   @Get(':email/quizzes')
-  async findUserQuizzes(@Param('email') email:string){
-      let user= await this.usersService.getUserWithQuizzes(email);
-      if(!user){
-        throw new NotFoundException(`no user with email ${email}`)
-      }
-      return  user.quizzes;
-  }
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  async findUserQuizzes(
+    @Param('email') email: string,
+    @CurrentUser('email') me: string,
+  ) {
+    if (email !== me) {
+      throw new ForbiddenException();
+    }
+    const user = await this.usersService.getUserWithQuizzes(email);
+    if (!user) {
+      throw new NotFoundException(`no user with email ${email}`);
+    }
+    return user.quizzes;
   }
 
   @Get()
