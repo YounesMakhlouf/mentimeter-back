@@ -80,7 +80,6 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
         if (result) {
             client.join(quizCode);
             const quiz = this.quizSessionService.quizSessions.get(quizCode);
-            console.log("player joined", quizCode)
             this.server.to(quiz.ownerSocketId).emit('playerJoined', {id: client.id, playerName, avatar});
             this.server.to(client.id).emit('playerJoined', {id: client.id, playerName, avatar});
         } else {
