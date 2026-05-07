@@ -1,14 +1,25 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Inject, UseGuards } from '@nestjs/common';
-import { QuestionsService } from './questions.service';
-import { CreateQuestionDto } from './dto/create-question.dto';
-import { UpdateQuestionDto } from './dto/update-question.dto';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Inject,
+  UseGuards,
+} from "@nestjs/common";
+import { QuestionsService } from "./questions.service";
+import { CreateQuestionDto } from "./dto/create-question.dto";
+import { UpdateQuestionDto } from "./dto/update-question.dto";
 import { JwtAuthGuard } from "../authentication/Guards/jwt-auth.guard";
 
-@Controller('questions')
+@Controller("questions")
 @UseGuards(JwtAuthGuard)
 export class QuestionsController {
-
-  constructor(@Inject(QuestionsService) private questionsService: QuestionsService) {}
+  constructor(
+    @Inject(QuestionsService) private questionsService: QuestionsService,
+  ) {}
 
   @Post()
   create(@Body() createQuestionDto: CreateQuestionDto) {
@@ -20,18 +31,21 @@ export class QuestionsController {
     return this.questionsService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
+  @Get(":id")
+  findOne(@Param("id") id: string) {
     return this.questionsService.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateQuestionDto: UpdateQuestionDto) {
+  @Patch(":id")
+  update(
+    @Param("id") id: string,
+    @Body() updateQuestionDto: UpdateQuestionDto,
+  ) {
     return this.questionsService.update(id, updateQuestionDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
+  @Delete(":id")
+  remove(@Param("id") id: string) {
     return this.questionsService.remove(id);
   }
 }

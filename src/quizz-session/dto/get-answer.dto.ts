@@ -1,4 +1,11 @@
-import { IsInt, IsNotEmpty, IsString, IsUUID, MaxLength, Min } from "class-validator";
+import {
+  IsInt,
+  IsNotEmpty,
+  IsString,
+  IsUUID,
+  MaxLength,
+  Min,
+} from "class-validator";
 
 export class GetAnswerDto {
   @IsUUID()

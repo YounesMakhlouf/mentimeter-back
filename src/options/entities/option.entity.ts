@@ -1,23 +1,25 @@
-import { Column, DeleteDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import {
+  Column,
+  DeleteDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from "typeorm";
 import { Question } from "../../questions/entities/question.entity";
 
 @Entity()
 export class Option {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()
-  label:string;
+  label: string;
 
   @DeleteDateColumn()
   deletedAt: Date;
-  
-  @Column()
-  isCorrect:boolean;
-  @ManyToOne(
-    ()=>Question,
-    (question:Question)=>question.options
-  )
-  question:Question;
 
+  @Column()
+  isCorrect: boolean;
+  @ManyToOne(() => Question, (question: Question) => question.options)
+  question: Question;
 }

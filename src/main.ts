@@ -1,23 +1,25 @@
-import 'reflect-metadata';
-import {NestFactory, Reflector} from '@nestjs/core';
-import {AppModule} from './app.module';
-import {DocumentBuilder, SwaggerModule} from '@nestjs/swagger';
-import {ClassSerializerInterceptor, ValidationPipe} from "@nestjs/common";
-import {AuthenticationModule} from "./authentication/authentication.module";
+import "reflect-metadata";
+import { NestFactory, Reflector } from "@nestjs/core";
+import { AppModule } from "./app.module";
+import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { ClassSerializerInterceptor, ValidationPipe } from "@nestjs/common";
+import { AuthenticationModule } from "./authentication/authentication.module";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors();
   const config = new DocumentBuilder()
-    .setTitle('Mentimeter API')
-    .setDescription('This API provides all the functionalities of the quiz app ')
-    .setVersion('1.0')
-    .addTag('authentication')
+    .setTitle("Mentimeter API")
+    .setDescription(
+      "This API provides all the functionalities of the quiz app ",
+    )
+    .setVersion("1.0")
+    .addTag("authentication")
     .build();
-  const document = SwaggerModule.createDocument(app,config, {
+  const document = SwaggerModule.createDocument(app, config, {
     include: [AuthenticationModule],
   });
-  SwaggerModule.setup('document', app, document);
+  SwaggerModule.setup("document", app, document);
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   await app.listen(3000);

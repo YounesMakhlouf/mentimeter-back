@@ -1,5 +1,12 @@
 import { Type } from "class-transformer";
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsNotEmpty, IsString, ValidateNested } from "class-validator";
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsNotEmpty,
+  IsString,
+  ValidateNested,
+} from "class-validator";
 import { CreateOptionDto } from "../../options/dto/create-option.dto";
 
 export class CreateQuestionDto {
