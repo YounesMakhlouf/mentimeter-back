@@ -54,7 +54,7 @@ export class AuthenticationService {
     let hashedPassword:string=user.password;
     let response=await bcrypt.compare( password,hashedPassword)
     if(!response){
-      return new UnauthorizedException("wrong password!")
+      throw new UnauthorizedException("wrong password!")
     }
     let payload={
       email:user.email,
