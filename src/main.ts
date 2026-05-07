@@ -18,7 +18,7 @@ async function bootstrap() {
     include: [AuthenticationModule],
   });
   SwaggerModule.setup('document', app, document);
-  app.useGlobalPipes(new ValidationPipe())
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   await app.listen(3000);
 }
