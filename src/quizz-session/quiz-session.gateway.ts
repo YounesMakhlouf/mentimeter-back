@@ -2,6 +2,7 @@ import { ConnectedSocket, MessageBody, OnGatewayDisconnect, OnGatewayInit, Subsc
 import { Server, Socket } from "socket.io";
 import { QuizSessionService } from "./quiz-session.service";
 import { JwtService } from "@nestjs/jwt";
+import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { User } from "../users/entities/user.entity";
@@ -17,6 +18,7 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
   constructor(
     private readonly quizSessionService: QuizSessionService,
     private readonly jwtService: JwtService,
+    private readonly config: ConfigService,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
   ) {
   }
@@ -41,7 +43,7 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
       }
       try {
         const payload = await this.jwtService.verifyAsync<PayloadInterface>(token, {
-          secret: process.env.SECRET,
+          secret: this.config.get<string>('SECRET'),
         });
         const user = await this.userRepository.findOneBy({ email: payload.email });
         if (!user) return next(new Error("unauthorized"));
