@@ -7,6 +7,8 @@ import { User } from "./entities/user.entity";
 import {CrudService} from "../common/service/crud.service";
 import {Quiz} from "../quizzes/entities/quiz.entity";
 
+const PUBLIC_USER_FIELDS = ['id', 'email', 'googleId'] as const;
+
 @Injectable()
 export class UsersService extends CrudService<User>{
   constructor(
@@ -15,6 +17,14 @@ export class UsersService extends CrudService<User>{
   )
   {
     super(userRepository)
+  }
+
+  findAll(): Promise<User[]> {
+    return this.userRepository.find({ select: [...PUBLIC_USER_FIELDS] });
+  }
+
+  findOne(id: string): Promise<User> {
+    return this.userRepository.findOne({ where: { id }, select: [...PUBLIC_USER_FIELDS] });
   }
 
   getUserWithQuizzes(email:string){

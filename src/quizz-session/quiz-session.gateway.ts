@@ -1,4 +1,4 @@
-import { ConnectedSocket, MessageBody, OnGatewayConnection, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
+import { ConnectedSocket, MessageBody, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
 import { QuizSessionService } from "./quiz-session.service";
 import { JwtService } from "@nestjs/jwt";
@@ -8,7 +8,7 @@ import { User } from "../users/entities/user.entity";
 import { PayloadInterface } from "../authentication/Interfaces/payload.interface";
 
 @WebSocketGateway(3001, { cors: { origin: "*" } })
-export class QuizSessionGateway implements OnGatewayConnection {
+export class QuizSessionGateway implements OnGatewayInit {
   @WebSocketServer()
   server: Server;
 
@@ -19,36 +19,43 @@ export class QuizSessionGateway implements OnGatewayConnection {
   ) {
   }
 
-  async handleConnection(client: Socket): Promise<void> {
-    const token = client.handshake?.auth?.token;
-    if (typeof token !== "string" || token.length === 0) {
-      // anonymous connection allowed (player join flow)
-      return;
-    }
-    try {
-      const payload = await this.jwtService.verifyAsync<PayloadInterface>(token, {
-        secret: process.env.SECRET,
-      });
-      const user = await this.userRepository.findOneBy({ email: payload.email });
-      if (!user) {
-        client.disconnect();
-        return;
+  afterInit(server: Server): void {
+    // Auth runs during the handshake so socket.data.user is set before any
+    // message handler can fire. Async handleConnection would race with
+    // immediate-emit-on-connect clients.
+    server.use(async (socket, next) => {
+      const token = socket.handshake?.auth?.token;
+      if (typeof token !== "string" || token.length === 0) {
+        return next(); // anonymous connection allowed (player join flow)
       }
-      delete user.password;
-      client.data.user = user;
-    } catch {
-      client.disconnect();
-    }
+      try {
+        const payload = await this.jwtService.verifyAsync<PayloadInterface>(token, {
+          secret: process.env.SECRET,
+        });
+        const user = await this.userRepository.findOneBy({ email: payload.email });
+        if (!user) return next(new Error("unauthorized"));
+        delete user.password;
+        socket.data.user = user;
+        next();
+      } catch {
+        next(new Error("unauthorized"));
+      }
+    });
   }
 
-    @SubscribeMessage('findAllQuizSession') handleFindAllQuizSession(@ConnectedSocket() client: Socket): any {
-        const sessions = this.quizSessionService.findAll();
-        const jsonResult = {};
-        sessions.forEach((value, key) => {
-            jsonResult[key] = value;
+    @SubscribeMessage('findAllQuizSession') handleFindAllQuizSession(@ConnectedSocket() client: Socket): void {
+        const user = client.data.user as User | undefined;
+        if (!user) {
+            client.emit('errorMsg', 'authentication required');
+            return;
+        }
+        const result: Record<string, unknown> = {};
+        this.quizSessionService.findAll().forEach((session, code) => {
+            if (session.owner?.email === user.email) {
+                result[code] = session;
+            }
         });
-        console.log(jsonResult)
-        return client.emit('findAllQuizSession', jsonResult);
+        client.emit('findAllQuizSession', result);
     }
 
     @SubscribeMessage('joinQuiz') handleJoinQuiz(@MessageBody() data: any, @ConnectedSocket() client: Socket): void {

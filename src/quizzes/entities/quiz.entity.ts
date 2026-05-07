@@ -24,7 +24,7 @@ export class Quiz {
   @OneToMany(
     ()=>Question,
     (question:Question)=>question.quiz,
-      {eager: true}
+      {eager: true, cascade: true}
   )
   questions:Question[]
 
