@@ -4,7 +4,6 @@ import * as dotenv from "dotenv"
 import {DocumentBuilder, SwaggerModule} from '@nestjs/swagger';
 import {ValidationPipe} from "@nestjs/common";
 import {AuthenticationModule} from "./authentication/authentication.module";
-import {WsAdapter} from '@nestjs/platform-ws';
 
 dotenv.config();
 async function bootstrap() {
