@@ -1,5 +1,5 @@
 import { ConnectedSocket, MessageBody, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException, WsResponse } from "@nestjs/websockets";
-import { UsePipes, ValidationPipe } from "@nestjs/common";
+import { ClassSerializerInterceptor, UseInterceptors, UsePipes, ValidationPipe } from "@nestjs/common";
 import { Server, Socket } from "socket.io";
 import { QuizSessionService } from "./quiz-session.service";
 import { JwtService } from "@nestjs/jwt";
@@ -16,6 +16,7 @@ import { GetAnswerDto } from "./dto/get-answer.dto";
 const QUESTION_DURATION_MS = 10_000;
 
 @WebSocketGateway(3001, { cors: { origin: "*" } })
+@UseInterceptors(ClassSerializerInterceptor)
 @UsePipes(new ValidationPipe({
   whitelist: true,
   transform: true,
