@@ -34,6 +34,6 @@ lerna-debug.log*
 !.vscode/launch.json
 !.vscode/extensions.json
 
-#.env
-#.env
-#jwt-constants.ts
+# Secrets
+.env
+jwt-constants.ts

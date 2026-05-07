@@ -38,10 +38,10 @@ export class QuizSessionService {
         return quizCode;
     }
 
-    joinQuiz(quizCode: string, playerId: string, playerName: string, avatar: string): boolean {
+    joinQuiz(quizCode: string, socketId: string, playerName: string, avatar: string): boolean {
         const quiz = this.quizSessions.get(quizCode);
         if (quiz) {
-            quiz.players.push({pseudo: playerName, avatar: avatar, answers: [], score: 0});
+            quiz.players.push({pseudo: playerName, avatar: avatar, answers: [], score: 0, socketId});
             return true;
         }
         return false;
@@ -104,13 +104,23 @@ export class QuizSessionService {
         return this.quizSessions;
     }
 
-    findOne(code: string, quizzes: Map<string, QuizSession>): QuizSession {
-        if (!quizzes[code]) throw new NotFoundException(`Quiz session with code ${code} not found`);
-        return quizzes[code];
+    findOne(code: string): QuizSession {
+        const session = this.quizSessions.get(code);
+        if (!session) throw new NotFoundException(`Quiz session with code ${code} not found`);
+        return session;
     }
 
-    remove(code: string, quizzes: Map<string, QuizSession>) {
-        if (!quizzes.delete(code)) {
+    cancelPendingTimer(code: string): void {
+        const session = this.quizSessions.get(code);
+        if (session?.pendingTimer) {
+            clearTimeout(session.pendingTimer);
+            session.pendingTimer = undefined;
+        }
+    }
+
+    remove(code: string) {
+        this.cancelPendingTimer(code);
+        if (!this.quizSessions.delete(code)) {
             throw new NotFoundException(`Quiz session with code ${code} not found`);
         }
     }

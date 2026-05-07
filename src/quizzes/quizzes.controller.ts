@@ -2,16 +2,18 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Inject } 
 import { QuizzesService } from './quizzes.service';
 import { CreateQuizDto } from './dto/create-quiz.dto';
 import { UpdateQuizDto } from './dto/update-quiz.dto';
+import { JwtAuthGuard } from "../authentication/Guards/jwt-auth.guard";
+import { CurrentUser } from "../authentication/decorators/current-user.decorator";
 
 
 @Controller('quizzes')
+@UseGuards(JwtAuthGuard)
 export class QuizzesController {
   constructor(@Inject(QuizzesService) private quizzesService: QuizzesService) {}
 
   @Post()
-  create(@Body() createQuizDto) {
-    console.log(createQuizDto.userEmail);
-    return this.quizzesService.saveQuiz(createQuizDto, createQuizDto.userEmail);
+  create(@Body() createQuizDto: CreateQuizDto, @CurrentUser('email') email: string) {
+    return this.quizzesService.saveQuiz(createQuizDto, email);
   }
 
   @Get()

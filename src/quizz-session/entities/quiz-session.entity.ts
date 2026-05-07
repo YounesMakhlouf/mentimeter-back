@@ -15,6 +15,12 @@ export class QuizSession {
 
     ownerSocketId?: string;
 
+    currentQuestionNumber?: number;
+
+    currentQuestionStartTime?: number;
+
+    pendingTimer?: NodeJS.Timeout;
+
     constructor() {
         this.players = [];
     }

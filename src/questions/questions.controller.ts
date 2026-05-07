@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Inject} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Inject, UseGuards } from '@nestjs/common';
 import { QuestionsService } from './questions.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
+import { JwtAuthGuard } from "../authentication/Guards/jwt-auth.guard";
 
 @Controller('questions')
+@UseGuards(JwtAuthGuard)
 export class QuestionsController {
 
   constructor(@Inject(QuestionsService) private questionsService: QuestionsService) {}

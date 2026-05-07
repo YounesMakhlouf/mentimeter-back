@@ -47,21 +47,13 @@ creation, management, and real-time participant interactions using WebSockets.
 
 ## Environment Variables
 
-Create a `.env` file in the root directory and add the following environment variables:
+Copy `.env.example` to `.env` and fill in the secrets (`SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and your local `DATABASE_*` values):
 
-    ```env
-    APP_PORT=3000
-    SECRET=brika
-    
-    # Database Configuration
-    DATABASE_TYPE=mysql
-    DATABASE_HOST=localhost
-    DATABASE_PORT=3306
-    DATABASE_USERNAME=root
-    DATABASE_PASSWORD=
-    DATABASE_NAME=mentimeter_db
-    DATABASE_SYNCHRONIZE=true
-    ```
+```bash
+cp .env.example .env
+```
+
+`.env` is gitignored — never commit it.
 
 ## Running the Application
 

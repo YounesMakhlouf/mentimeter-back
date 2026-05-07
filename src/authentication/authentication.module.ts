@@ -24,5 +24,6 @@ dotenv.config();
       signOptions:{expiresIn:3600}
     })
   ],
+  exports: [JwtModule],
 })
 export class AuthenticationModule {}
