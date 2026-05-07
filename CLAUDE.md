@@ -19,7 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-NestJS 10 + TypeORM (MySQL) + Passport (JWT + Google OAuth) + dual WebSocket transports.
+NestJS 10 + TypeORM (MySQL) + Passport (JWT) + dual WebSocket transports.
 
 ### Three network surfaces, three ports
 - **Port 3000** — HTTP REST API (Express). Global `ValidationPipe`, CORS open, Swagger at `/document`.
@@ -39,9 +39,9 @@ Gateway flow (`src/quizz-session/quiz-session.gateway.ts`):
 4. Players emit `getAnswer` with `{quizCode, answer, questionNumber}`. The player is identified by `socket.id` (not by a body field) and scored against `quiz.currentQuestionStartTime`. Answers for stale `questionNumber`s are silently dropped. `endQuiz` fires exactly once, from the timer.
 
 ### Authentication
-- `AuthenticationModule` registers `JwtStrategy` and `GoogleStrategy` and `exports: [JwtModule]` so other modules (e.g. `QuizSessionModule`) can inject `JwtService`. JWT secret comes from `process.env.SECRET` (sign and verify both read it). The standalone `jwt-constants.ts` at the repo root is now unused dead code — safe to delete.
-- Routes: `POST /authentication/register`, `POST /authentication/login`, `GET /authentication/google/login` (browser redirect), `GET /authentication/success` (Google callback → returns JWT).
-- Login/Google login response shape: `{ accessToken, username, email }`. Note the field is `accessToken` (camelCase) — historically it was `access-token`.
+- `AuthenticationModule` registers `JwtStrategy` and `exports: [JwtModule]` so other modules (e.g. `QuizSessionModule`) can inject `JwtService`. JWT secret is read via `ConfigService` at DI time (`JwtModule.registerAsync`).
+- Routes: `POST /authentication/register`, `POST /authentication/login`. (Google OAuth was removed.)
+- Login response shape: `{ accessToken, username, email }`. Note the field is `accessToken` (camelCase) — historically it was `access-token`.
 - All non-auth controllers (`/users`, `/quizzes`, `/options`, `/questions`) are guarded by `@UseGuards(JwtAuthGuard)` at the controller level — clients must send `Authorization: Bearer <jwt>`. `POST /quizzes` derives the owner email from the JWT via `@CurrentUser('email')` (param decorator at `src/authentication/decorators/current-user.decorator.ts`); a `userEmail` body field is ignored.
 - WebSocket auth on port 3001: `QuizSessionGateway` implements `OnGatewayConnection`. Token is read from `handshake.auth.token` (Socket.IO clients pass it as `io(URL, { auth: { token } })`). Missing token = anonymous (the player join flow); valid token = the user is loaded onto `socket.data.user`; invalid/expired token = the server disconnects. `createQuizSession` requires `socket.data.user`. `sendQuestion` requires `client.id === session.ownerSocketId`. The `findAllQuizSession` handler is **still unauthenticated** and exposes every live session — known issue.
 

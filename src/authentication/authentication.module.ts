@@ -7,11 +7,10 @@ import { User } from "../users/entities/user.entity";
 import { PassportModule } from "@nestjs/passport";
 import { JwtModule } from "@nestjs/jwt";
 import { JwtStrategy } from "./strategies/passport-jwt-strategy";
-import { GoogleStrategy } from "./strategies/passport-google.strategy";
 
 @Module({
   controllers: [AuthenticationController],
-  providers: [AuthenticationService,JwtStrategy,GoogleStrategy],
+  providers: [AuthenticationService,JwtStrategy],
   imports:[
     TypeOrmModule.forFeature([User]),
     PassportModule.register({

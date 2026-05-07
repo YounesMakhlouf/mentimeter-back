@@ -7,7 +7,7 @@ import { User } from "./entities/user.entity";
 import {CrudService} from "../common/service/crud.service";
 import {Quiz} from "../quizzes/entities/quiz.entity";
 
-const PUBLIC_USER_FIELDS = ['id', 'email', 'googleId'] as const;
+const PUBLIC_USER_FIELDS = ['id', 'email'] as const;
 
 @Injectable()
 export class UsersService extends CrudService<User>{
