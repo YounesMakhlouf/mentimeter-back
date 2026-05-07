@@ -11,12 +11,6 @@ export class Quiz {
   @Column()
   name:string
 
-  @Column()
-  code:string
-
-  @Column()
-  link:string
-
   @DeleteDateColumn()
   deletedAt: Date;
 

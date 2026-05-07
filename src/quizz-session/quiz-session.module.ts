@@ -9,9 +9,10 @@ import {Quiz} from "../quizzes/entities/quiz.entity";
 import {Question} from "../questions/entities/question.entity";
 import {User} from "../users/entities/user.entity";
 import {Option} from "../options/entities/option.entity";
+import { AuthenticationModule } from "../authentication/authentication.module";
 
 @Module({
   providers: [QuizSessionGateway,QuizSessionService],
-  imports:[TypeOrmModule.forFeature([Quiz,User])]
+  imports:[TypeOrmModule.forFeature([Quiz,User]), AuthenticationModule]
 })
 export class QuizSessionModule {}

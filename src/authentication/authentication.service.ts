@@ -67,7 +67,7 @@ export class AuthenticationService {
         i++;
     }
     return{
-      "access-token":jwt,
+      "accessToken":jwt,
       "username":username,
       "email":email,
     }
@@ -97,7 +97,7 @@ export class AuthenticationService {
     }
     const jwt:string=this.jwtService.sign(payload);
     return{
-      "access-token":jwt,
+      "accessToken":jwt,
       "username":username,
 
     }

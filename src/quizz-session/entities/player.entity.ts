@@ -5,11 +5,13 @@ export class Player {
     avatar: string;
     score: number;
     answers: Option[];
+    socketId: string;
 
-    constructor(pseudo: string, avatar: string) {
+    constructor(pseudo: string, avatar: string, socketId: string) {
         this.pseudo = pseudo;
         this.avatar = avatar;
         this.score = 0;
         this.answers = [];
+        this.socketId = socketId;
     }
 }
