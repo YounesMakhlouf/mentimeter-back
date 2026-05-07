@@ -1,4 +1,4 @@
-import { ConnectedSocket, MessageBody, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
+import { ConnectedSocket, MessageBody, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer, WsResponse } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
 import { QuizSessionService } from "./quiz-session.service";
 import { JwtService } from "@nestjs/jwt";
@@ -47,7 +47,6 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
         });
         const user = await this.userRepository.findOneBy({ email: payload.email });
         if (!user) return next(new Error("unauthorized"));
-        delete user.password;
         socket.data.user = user;
         next();
       } catch {
@@ -56,22 +55,22 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
     });
   }
 
-    @SubscribeMessage('findAllQuizSession') handleFindAllQuizSession(@ConnectedSocket() client: Socket): void {
+    @SubscribeMessage('findAllQuizSession')
+    handleFindAllQuizSession(@ConnectedSocket() client: Socket): WsResponse | void {
         const user = client.data.user as User | undefined;
         if (!user) {
             client.emit('errorMsg', 'authentication required');
             return;
         }
-        const result: Record<string, unknown> = {};
+        const data: Record<string, unknown> = {};
         this.quizSessionService.findAll().forEach((session, code) => {
             if (session.owner?.email === user.email) {
-                // Strip non-serializable / sensitive fields before sending over the wire.
-                const { pendingTimer: _t, owner, ...rest } = session;
-                const safeOwner = owner ? { ...owner, password: undefined } : undefined;
-                result[code] = { ...rest, owner: safeOwner };
+                // pendingTimer is a NodeJS.Timeout (non-serializable); strip it.
+                const { pendingTimer: _t, ...rest } = session;
+                data[code] = rest;
             }
         });
-        client.emit('findAllQuizSession', result);
+        return { event: 'findAllQuizSession', data };
     }
 
     @SubscribeMessage('joinQuiz') handleJoinQuiz(@MessageBody() data: any, @ConnectedSocket() client: Socket): void {
