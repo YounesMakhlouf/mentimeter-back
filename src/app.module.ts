@@ -24,16 +24,26 @@ import { QuizSessionModule } from "./quizz-session/quiz-session.module";
     ConfigModule.forRoot({ isGlobal: true }), // Other imports
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: "mysql",
-        host: configService.get<string>("DATABASE_HOST"),
-        port: configService.get<number>("DATABASE_PORT"),
-        username: configService.get<string>("DATABASE_USERNAME"),
-        password: configService.get<string>("DATABASE_PASSWORD"),
-        database: configService.get<string>("DATABASE_NAME"),
-        entities: [User, Question, Quiz, Option],
-        synchronize: configService.get<boolean>("DATABASE_SYNCHRONIZE"),
-      }),
+      useFactory: (configService: ConfigService) => {
+        const isProduction =
+          configService.get<string>("NODE_ENV") === "production";
+        return {
+          type: "mysql",
+          host: configService.get<string>("DATABASE_HOST"),
+          port: configService.get<number>("DATABASE_PORT"),
+          username: configService.get<string>("DATABASE_USERNAME"),
+          password: configService.get<string>("DATABASE_PASSWORD"),
+          database: configService.get<string>("DATABASE_NAME"),
+          entities: [User, Question, Quiz, Option],
+          // Schema sync is dev-only. Production must use migrations to
+          // avoid accidental column/data drops. Honors DATABASE_SYNCHRONIZE
+          // only outside production.
+          synchronize:
+            !isProduction &&
+            configService.get<boolean>("DATABASE_SYNCHRONIZE") === true,
+          migrations: [__dirname + "/migrations/*.{ts,js}"],
+        };
+      },
       inject: [ConfigService],
     }),
     AuthenticationModule,

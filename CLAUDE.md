@@ -14,8 +14,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Required environment
 
-`.env` is loaded by `dotenv` in `main.ts` and `app.module.ts`. Required keys:
-`APP_PORT`, `SECRET` (JWT signing), `DATABASE_TYPE`, `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `DATABASE_NAME`, `DATABASE_SYNCHRONIZE`. The DB driver is hardcoded to `mysql` in `app.module.ts` regardless of `DATABASE_TYPE`. With `DATABASE_SYNCHRONIZE=true`, TypeORM auto-syncs schema from entities — there are no migrations.
+`.env` is loaded by `ConfigModule.forRoot({ isGlobal: true })` in `app.module.ts`. Required keys: `APP_PORT`, `SECRET` (JWT signing), `NODE_ENV`, `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `DATABASE_NAME`, `DATABASE_SYNCHRONIZE`. The DB driver is hardcoded to `mysql` in `app.module.ts`.
+
+**Schema management.** `synchronize: true` is dev-only — `app.module.ts` checks `NODE_ENV` and ignores `DATABASE_SYNCHRONIZE` when it's `production`. Migrations live in `src/migrations/` and are managed via the TypeORM CLI:
+
+- `npm run migration:generate -- src/migrations/<Name>` — generates a migration that diffs entities against the live DB.
+- `npm run migration:run` — applies pending migrations.
+- `npm run migration:revert` — rolls back the most recent migration.
+
+The CLI uses `src/data-source.ts` (a standalone DataSource purely for CLI use; the runtime connection is in `app.module.ts`). Migrations are not auto-applied at app startup — production deploys must call `migration:run` explicitly.
 
 ## Architecture
 
