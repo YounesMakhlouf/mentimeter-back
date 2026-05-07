@@ -1,27 +1,27 @@
-import {User} from '../../users/entities/user.entity';
-import {Quiz} from '../../quizzes/entities/quiz.entity';
-import {Player} from './player.entity';
+import { User } from "../../users/entities/user.entity";
+import { Quiz } from "../../quizzes/entities/quiz.entity";
+import { Player } from "./player.entity";
 
 export class QuizSession {
-    quiz: Quiz;
+  quiz: Quiz;
 
-    quizCode: string;
+  quizCode: string;
 
-    owner: User;
+  owner: User;
 
-    hasStarted: boolean;
+  hasStarted: boolean;
 
-    players: Player[];
+  players: Player[];
 
-    ownerSocketId?: string;
+  ownerSocketId?: string;
 
-    currentQuestionNumber?: number;
+  currentQuestionNumber?: number;
 
-    currentQuestionStartTime?: number;
+  currentQuestionStartTime?: number;
 
-    pendingTimer?: NodeJS.Timeout;
+  pendingTimer?: NodeJS.Timeout;
 
-    constructor() {
-        this.players = [];
-    }
+  constructor() {
+    this.players = [];
+  }
 }

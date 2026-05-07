@@ -1,21 +1,18 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from "class-validator";
+import { IsEmail, IsNotEmpty, MinLength } from "class-validator";
 
 export class CreateUserDto {
-  @IsNotEmpty(
-    {
-      message:"field $property  is compulsory"
-    }
-  )
+  @IsNotEmpty({
+    message: "field $property  is compulsory",
+  })
   @IsEmail()
-  email:string;
+  email: string;
 
   @IsNotEmpty({
-    message:"field $property  is compulsory"
+    message: "field $property  is compulsory",
   })
   @MinLength(6, {
-      message: "the length of your  $property  is inferior to the minimum length required ($constraint1)"
-    }
-  )
-  password?:string;
-
+    message:
+      "the length of your  $property  is inferior to the minimum length required ($constraint1)",
+  })
+  password?: string;
 }

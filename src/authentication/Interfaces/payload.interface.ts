@@ -1,3 +1,3 @@
-export interface PayloadInterface{
-  email:string,
+export interface PayloadInterface {
+  email: string;
 }
