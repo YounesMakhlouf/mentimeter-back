@@ -1,10 +1,17 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { v4 as uuidv4 } from "uuid";
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from "@nestjs/common";
+import { randomInt } from "crypto";
 import { QuizSession } from "./entities/quiz-session.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Quiz } from "../quizzes/entities/quiz.entity";
 import { Repository } from "typeorm";
 import { User } from "../users/entities/user.entity";
+
+const QUIZ_CODE_LENGTH = 6;
+const QUIZ_CODE_MAX_ATTEMPTS = 100;
 
 @Injectable()
 export class QuizSessionService {
@@ -13,12 +20,29 @@ export class QuizSessionService {
     @InjectRepository(Quiz) private quizRepository: Repository<Quiz>,
     @InjectRepository(User) private userRepository: Repository<User>,
   ) {}
+
+  /**
+   * Generates a 6-digit numeric PIN that isn't currently in use.
+   * Uses crypto.randomInt for unbiased generation; retries on collision.
+   */
+  private generateQuizCode(): string {
+    for (let attempt = 0; attempt < QUIZ_CODE_MAX_ATTEMPTS; attempt++) {
+      const code = randomInt(0, 1_000_000)
+        .toString()
+        .padStart(QUIZ_CODE_LENGTH, "0");
+      if (!this.quizSessions.has(code)) return code;
+    }
+    throw new InternalServerErrorException(
+      "could not allocate a unique quiz code; too many active sessions",
+    );
+  }
+
   async createQuiz(
     quizId: string,
     ownerId: string,
     ownerSocketId: string,
   ): Promise<string> {
-    const quizCode = uuidv4();
+    const quizCode = this.generateQuizCode();
     const quiz = await this.quizRepository
       .createQueryBuilder("quiz")
       .where("quiz.id = :id", { id: quizId })

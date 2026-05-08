@@ -1,7 +1,7 @@
-import { IsInt, IsNotEmpty, IsUUID, Min } from "class-validator";
+import { IsInt, IsNotEmpty, Matches, Min } from "class-validator";
 
 export class SendQuestionDto {
-  @IsUUID()
+  @Matches(/^\d{6}$/, { message: "quizCode must be a 6-digit PIN" })
   @IsNotEmpty()
   quizCode: string;
 
