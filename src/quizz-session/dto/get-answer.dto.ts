@@ -2,13 +2,13 @@ import {
   IsInt,
   IsNotEmpty,
   IsString,
-  IsUUID,
+  Matches,
   MaxLength,
   Min,
 } from "class-validator";
 
 export class GetAnswerDto {
-  @IsUUID()
+  @Matches(/^\d{6}$/, { message: "quizCode must be a 6-digit PIN" })
   @IsNotEmpty()
   quizCode: string;
 
