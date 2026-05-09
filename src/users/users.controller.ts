@@ -6,10 +6,13 @@ import {
   ForbiddenException,
   UseGuards,
 } from "@nestjs/common";
+import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { UsersService } from "./users.service";
 import { JwtAuthGuard } from "../authentication/Guards/jwt-auth.guard";
 import { CurrentUser } from "../authentication/decorators/current-user.decorator";
 
+@ApiTags("users")
+@ApiBearerAuth("bearer")
 @Controller("users")
 @UseGuards(JwtAuthGuard)
 export class UsersController {

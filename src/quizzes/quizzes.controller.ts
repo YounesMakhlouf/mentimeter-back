@@ -9,12 +9,15 @@ import {
   UseGuards,
   Inject,
 } from "@nestjs/common";
+import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { QuizzesService } from "./quizzes.service";
 import { CreateQuizDto } from "./dto/create-quiz.dto";
 import { UpdateQuizDto } from "./dto/update-quiz.dto";
 import { JwtAuthGuard } from "../authentication/Guards/jwt-auth.guard";
 import { CurrentUser } from "../authentication/decorators/current-user.decorator";
 
+@ApiTags("quizzes")
+@ApiBearerAuth("bearer")
 @Controller("quizzes")
 @UseGuards(JwtAuthGuard)
 export class QuizzesController {

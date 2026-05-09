@@ -11,6 +11,7 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
     "skipLibCheck": true,
     "types": ["node", "jest"],
     "strictNullChecks": false,

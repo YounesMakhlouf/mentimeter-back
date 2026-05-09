@@ -9,11 +9,14 @@ import {
   Inject,
   UseGuards,
 } from "@nestjs/common";
+import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { QuestionsService } from "./questions.service";
 import { CreateQuestionDto } from "./dto/create-question.dto";
 import { UpdateQuestionDto } from "./dto/update-question.dto";
 import { JwtAuthGuard } from "../authentication/Guards/jwt-auth.guard";
 
+@ApiTags("questions")
+@ApiBearerAuth("bearer")
 @Controller("questions")
 @UseGuards(JwtAuthGuard)
 export class QuestionsController {
