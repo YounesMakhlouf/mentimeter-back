@@ -9,11 +9,14 @@ import {
   Inject,
   UseGuards,
 } from "@nestjs/common";
+import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { OptionsService } from "./options.service";
 import { CreateOptionDto } from "./dto/create-option.dto";
 import { UpdateOptionDto } from "./dto/update-option.dto";
 import { JwtAuthGuard } from "../authentication/Guards/jwt-auth.guard";
 
+@ApiTags("options")
+@ApiBearerAuth("bearer")
 @Controller("options")
 @UseGuards(JwtAuthGuard)
 export class OptionsController {
