@@ -1,95 +1,136 @@
-import {Injectable, NotFoundException} from '@nestjs/common';
-import {CreateQuizSessionDto} from './dto/create-quiz-session.dto';
-import {v4 as uuidv4} from 'uuid';
-import {QuizSession} from "./entities/quiz-session.entity";
-import {QuizzesService} from "../quizzes/quizzes.service";
-import {InjectRepository} from "@nestjs/typeorm";
-import {Quiz} from "../quizzes/entities/quiz.entity";
-import {Repository} from "typeorm";
-import {Question} from "../questions/entities/question.entity";
-import {Option} from "../options/entities/option.entity";
-import {User} from "../users/entities/user.entity";
-import {UsersService} from "../users/users.service";
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from "@nestjs/common";
+import { randomInt } from "crypto";
+import { QuizSession } from "./entities/quiz-session.entity";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Quiz } from "../quizzes/entities/quiz.entity";
+import { Repository } from "typeorm";
+import { User } from "../users/entities/user.entity";
+
+const QUIZ_CODE_LENGTH = 6;
+const QUIZ_CODE_MAX_ATTEMPTS = 100;
 
 @Injectable()
 export class QuizSessionService {
+  quizSessions: Map<string, QuizSession> = new Map();
+  constructor(
+    @InjectRepository(Quiz) private quizRepository: Repository<Quiz>,
+    @InjectRepository(User) private userRepository: Repository<User>,
+  ) {}
 
-    quizSessions: Map<string, QuizSession> = new Map();
-    constructor(@InjectRepository(Quiz) private quizRepository: Repository<Quiz>,
-                @InjectRepository(User) private userRepository: Repository<User>) {
+  /**
+   * Generates a 6-digit numeric PIN that isn't currently in use.
+   * Uses crypto.randomInt for unbiased generation; retries on collision.
+   */
+  private generateQuizCode(): string {
+    for (let attempt = 0; attempt < QUIZ_CODE_MAX_ATTEMPTS; attempt++) {
+      const code = randomInt(0, 1_000_000)
+        .toString()
+        .padStart(QUIZ_CODE_LENGTH, "0");
+      if (!this.quizSessions.has(code)) return code;
     }
-    async createQuiz(quizId: string, ownerId: string, ownerSocketId: string): Promise<string> {
-        const quizCode = uuidv4();
-        const quiz = await this.quizRepository.createQueryBuilder('quiz')
-            .where('quiz.id = :id', { id : quizId })
-            .leftJoinAndSelect('quiz.questions', 'question')
-            .leftJoinAndSelect('question.options', 'option')
-            .getOne()
-        const owner = await this.userRepository.findOne({where: {email: ownerId}});
-        const quizSession: QuizSession = {
-            quiz: quiz,
-            quizCode: quizCode,
-            owner: owner,
-            hasStarted: false,
-            players: [],
-            ownerSocketId: ownerSocketId
-        }
-        this.quizSessions.set(quizCode, quizSession);
-        return quizCode;
-    }
+    throw new InternalServerErrorException(
+      "could not allocate a unique quiz code; too many active sessions",
+    );
+  }
 
-    joinQuiz(quizCode: string, socketId: string, playerName: string, avatar: string): boolean {
-        const quiz = this.quizSessions.get(quizCode);
-        if (!quiz) return false;
-        if (quiz.players.some(p => p.socketId === socketId)) return false;
-        quiz.players.push({pseudo: playerName, avatar: avatar, answers: [], score: 0, socketId});
-        return true;
-    }
+  async createQuiz(
+    quizId: string,
+    ownerId: string,
+    ownerSocketId: string,
+  ): Promise<string> {
+    const quizCode = this.generateQuizCode();
+    const quiz = await this.quizRepository
+      .createQueryBuilder("quiz")
+      .where("quiz.id = :id", { id: quizId })
+      .leftJoinAndSelect("quiz.questions", "question")
+      .leftJoinAndSelect("question.options", "option")
+      .getOne();
+    const owner = await this.userRepository.findOne({
+      where: { email: ownerId },
+    });
+    const quizSession: QuizSession = {
+      quiz: quiz,
+      quizCode: quizCode,
+      owner: owner,
+      hasStarted: false,
+      players: [],
+      ownerSocketId: ownerSocketId,
+    };
+    this.quizSessions.set(quizCode, quizSession);
+    return quizCode;
+  }
 
-    startQuiz(quizCode: string): any[] {
-        const quizSession: QuizSession = this.quizSessions.get(quizCode);
-        const quiz = quizSession.quiz;
-        if (quiz) {
-            quizSession.hasStarted = true;
-            return quiz.questions; // Send the questions to all players
-        }
-        throw new NotFoundException(`Quiz session with code ${quizCode} not found`);
-    }
+  joinQuiz(
+    quizCode: string,
+    socketId: string,
+    playerName: string,
+    avatar: string,
+  ): boolean {
+    const quiz = this.quizSessions.get(quizCode);
+    if (!quiz) return false;
+    if (quiz.players.some((p) => p.socketId === socketId)) return false;
+    quiz.players.push({
+      pseudo: playerName,
+      avatar: avatar,
+      answers: [],
+      score: 0,
+      socketId,
+    });
+    return true;
+  }
 
-    processLeaderboard(quizCode: string) {
-        const quizSession = this.quizSessions.get(quizCode);
-        if (quizSession) {
-            const leaderboard = quizSession.players
-                .sort((a, b) => b.score - a.score)
-                .map((player, index) => ({
-                    rank: index + 1, name: player.pseudo, score: player.score, avatar: player.avatar
-                }));
-            return leaderboard;
-        }
+  startQuiz(quizCode: string): any[] {
+    const quizSession: QuizSession = this.quizSessions.get(quizCode);
+    const quiz = quizSession.quiz;
+    if (quiz) {
+      quizSession.hasStarted = true;
+      return quiz.questions; // Send the questions to all players
     }
+    throw new NotFoundException(`Quiz session with code ${quizCode} not found`);
+  }
 
-    findAll(): Map<string, QuizSession> {
-        return this.quizSessions;
+  processLeaderboard(quizCode: string) {
+    const quizSession = this.quizSessions.get(quizCode);
+    if (quizSession) {
+      const leaderboard = quizSession.players
+        .sort((a, b) => b.score - a.score)
+        .map((player, index) => ({
+          rank: index + 1,
+          name: player.pseudo,
+          score: player.score,
+          avatar: player.avatar,
+        }));
+      return leaderboard;
     }
+  }
 
-    findOne(code: string): QuizSession {
-        const session = this.quizSessions.get(code);
-        if (!session) throw new NotFoundException(`Quiz session with code ${code} not found`);
-        return session;
-    }
+  findAll(): Map<string, QuizSession> {
+    return this.quizSessions;
+  }
 
-    cancelPendingTimer(code: string): void {
-        const session = this.quizSessions.get(code);
-        if (session?.pendingTimer) {
-            clearTimeout(session.pendingTimer);
-            session.pendingTimer = undefined;
-        }
-    }
+  findOne(code: string): QuizSession {
+    const session = this.quizSessions.get(code);
+    if (!session)
+      throw new NotFoundException(`Quiz session with code ${code} not found`);
+    return session;
+  }
 
-    remove(code: string) {
-        this.cancelPendingTimer(code);
-        if (!this.quizSessions.delete(code)) {
-            throw new NotFoundException(`Quiz session with code ${code} not found`);
-        }
+  cancelPendingTimer(code: string): void {
+    const session = this.quizSessions.get(code);
+    if (session?.pendingTimer) {
+      clearTimeout(session.pendingTimer);
+      session.pendingTimer = undefined;
     }
+  }
+
+  remove(code: string) {
+    this.cancelPendingTimer(code);
+    if (!this.quizSessions.delete(code)) {
+      throw new NotFoundException(`Quiz session with code ${code} not found`);
+    }
+  }
 }

@@ -1,18 +1,24 @@
-import { Controller, Get, Param, NotFoundException, ForbiddenException, UseGuards } from "@nestjs/common";
-import { UsersService } from './users.service';
+import {
+  Controller,
+  Get,
+  Param,
+  NotFoundException,
+  ForbiddenException,
+  UseGuards,
+} from "@nestjs/common";
+import { UsersService } from "./users.service";
 import { JwtAuthGuard } from "../authentication/Guards/jwt-auth.guard";
 import { CurrentUser } from "../authentication/decorators/current-user.decorator";
 
-@Controller('users')
+@Controller("users")
 @UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-
-  @Get(':email/quizzes')
+  @Get(":email/quizzes")
   async findUserQuizzes(
-    @Param('email') email: string,
-    @CurrentUser('email') me: string,
+    @Param("email") email: string,
+    @CurrentUser("email") me: string,
   ) {
     if (email !== me) {
       throw new ForbiddenException();
@@ -29,8 +35,8 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
+  @Get(":id")
+  findOne(@Param("id") id: string) {
     return this.usersService.findOne(id);
   }
 }

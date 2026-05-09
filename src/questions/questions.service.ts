@@ -1,15 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { Question } from './entities/question.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { CrudService } from '../common/service/crud.service';
-import {OptionsService} from "../options/options.service";
+import { Injectable } from "@nestjs/common";
+import { Repository } from "typeorm";
+import { Question } from "./entities/question.entity";
+import { InjectRepository } from "@nestjs/typeorm";
+import { CrudService } from "../common/service/crud.service";
 
 @Injectable()
-export class QuestionsService extends CrudService<Question>{
+export class QuestionsService extends CrudService<Question> {
   constructor(
-      @InjectRepository(Question)
-      private questionRepository: Repository<Question>,
+    @InjectRepository(Question)
+    private questionRepository: Repository<Question>,
   ) {
     super(questionRepository);
   }
@@ -17,5 +16,4 @@ export class QuestionsService extends CrudService<Question>{
   /*async addQuestionWithOptions(question: Question): Promise<void> {
       this.questionRepository.create(question);
   }*/
-  }
-
+}

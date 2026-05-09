@@ -1,5 +1,20 @@
-import { ConnectedSocket, MessageBody, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException, WsResponse } from "@nestjs/websockets";
-import { ClassSerializerInterceptor, UseInterceptors, UsePipes, ValidationPipe } from "@nestjs/common";
+import {
+  ConnectedSocket,
+  MessageBody,
+  OnGatewayDisconnect,
+  OnGatewayInit,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
+  WsException,
+  WsResponse,
+} from "@nestjs/websockets";
+import {
+  ClassSerializerInterceptor,
+  UseInterceptors,
+  UsePipes,
+  ValidationPipe,
+} from "@nestjs/common";
 import { Server, Socket } from "socket.io";
 import { QuizSessionService } from "./quiz-session.service";
 import { JwtService } from "@nestjs/jwt";
@@ -17,11 +32,13 @@ const QUESTION_DURATION_MS = 10_000;
 
 @WebSocketGateway(3001, { cors: { origin: "*" } })
 @UseInterceptors(ClassSerializerInterceptor)
-@UsePipes(new ValidationPipe({
-  whitelist: true,
-  transform: true,
-  exceptionFactory: (errors) => new WsException(errors),
-}))
+@UsePipes(
+  new ValidationPipe({
+    whitelist: true,
+    transform: true,
+    exceptionFactory: (errors) => new WsException(errors),
+  }),
+)
 export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
@@ -31,13 +48,14 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
-  ) {
-  }
+  ) {}
 
   handleDisconnect(client: Socket): void {
     for (const [code, session] of this.quizSessionService.quizSessions) {
       if (session.ownerSocketId === client.id) {
-        this.server.to(code).emit("sessionEnded", { reason: "host disconnected" });
+        this.server
+          .to(code)
+          .emit("sessionEnded", { reason: "host disconnected" });
         this.quizSessionService.remove(code);
       }
     }
@@ -53,10 +71,15 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
         return next(); // anonymous connection allowed (player join flow)
       }
       try {
-        const payload = await this.jwtService.verifyAsync<PayloadInterface>(token, {
-          secret: this.config.get<string>('SECRET'),
+        const payload = await this.jwtService.verifyAsync<PayloadInterface>(
+          token,
+          {
+            secret: this.config.get<string>("SECRET"),
+          },
+        );
+        const user = await this.userRepository.findOneBy({
+          email: payload.email,
         });
-        const user = await this.userRepository.findOneBy({ email: payload.email });
         if (!user) return next(new Error("unauthorized"));
         socket.data.user = user;
         next();
@@ -66,44 +89,63 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
     });
   }
 
-    @SubscribeMessage('findAllQuizSession')
-    handleFindAllQuizSession(@ConnectedSocket() client: Socket): WsResponse | void {
-        const user = client.data.user as User | undefined;
-        if (!user) {
-            client.emit('errorMsg', 'authentication required');
-            return;
-        }
-        const data: Record<string, unknown> = {};
-        this.quizSessionService.findAll().forEach((session, code) => {
-            if (session.owner?.email === user.email) {
-                // pendingTimer is a NodeJS.Timeout (non-serializable); strip it.
-                const { pendingTimer: _t, ...rest } = session;
-                data[code] = rest;
-            }
-        });
-        return { event: 'findAllQuizSession', data };
+  @SubscribeMessage("findAllQuizSession")
+  handleFindAllQuizSession(
+    @ConnectedSocket() client: Socket,
+  ): WsResponse | void {
+    const user = client.data.user as User | undefined;
+    if (!user) {
+      client.emit("errorMsg", "authentication required");
+      return;
     }
+    const data: Record<string, unknown> = {};
+    this.quizSessionService.findAll().forEach((session, code) => {
+      if (session.owner?.email === user.email) {
+        // pendingTimer is a NodeJS.Timeout (non-serializable); strip it.
+        const { pendingTimer: _t, ...rest } = session;
+        data[code] = rest;
+      }
+    });
+    return { event: "findAllQuizSession", data };
+  }
 
-    @SubscribeMessage('joinQuiz') handleJoinQuiz(@MessageBody() data: JoinQuizDto, @ConnectedSocket() client: Socket): void {
-        const {quizCode, playerName, avatar} = data;
-        const result = this.quizSessionService.joinQuiz(quizCode, client.id, playerName, avatar);
+  @SubscribeMessage("joinQuiz") handleJoinQuiz(
+    @MessageBody() data: JoinQuizDto,
+    @ConnectedSocket() client: Socket,
+  ): void {
+    const { quizCode, playerName, avatar } = data;
+    const result = this.quizSessionService.joinQuiz(
+      quizCode,
+      client.id,
+      playerName,
+      avatar,
+    );
 
-        if (result) {
-            client.join(quizCode);
-            const quiz = this.quizSessionService.quizSessions.get(quizCode);
-            this.server.to(quiz.ownerSocketId).emit('playerJoined', {id: client.id, playerName, avatar});
-            this.server.to(client.id).emit('playerJoined', {id: client.id, playerName, avatar});
-        } else {
-            client.emit('errorMsg', 'Failed to join quiz.');
-        }
+    if (result) {
+      client.join(quizCode);
+      const quiz = this.quizSessionService.quizSessions.get(quizCode);
+      this.server
+        .to(quiz.ownerSocketId)
+        .emit("playerJoined", { id: client.id, playerName, avatar });
+      this.server
+        .to(client.id)
+        .emit("playerJoined", { id: client.id, playerName, avatar });
+    } else {
+      client.emit("errorMsg", "Failed to join quiz.");
     }
+  }
 
   @SubscribeMessage("sendQuestion")
-  sendQuestion(@MessageBody() data: SendQuestionDto, @ConnectedSocket() client?: Socket): void {
+  sendQuestion(
+    @MessageBody() data: SendQuestionDto,
+    @ConnectedSocket() client?: Socket,
+  ): void {
     const { quizCode, questionNumber } = data;
     const quiz = this.quizSessionService.quizSessions.get(quizCode);
     if (!quiz) {
-      this.server.to(quizCode).emit("error", `can't fetch quiz, it has probably been deleted`);
+      this.server
+        .to(quizCode)
+        .emit("error", `can't fetch quiz, it has probably been deleted`);
       return;
     }
     // host-only: client is undefined when invoked by the timer chain, which we trust
@@ -115,7 +157,12 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
     const questions = quiz.quiz.questions;
     const question = questions[questionNumber];
     if (!question) {
-      this.server.to(quizCode).emit("error", `an error occurred while retrieving question ${questionNumber}`);
+      this.server
+        .to(quizCode)
+        .emit(
+          "error",
+          `an error occurred while retrieving question ${questionNumber}`,
+        );
       return;
     }
 
@@ -123,7 +170,9 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
     quiz.currentQuestionNumber = questionNumber;
     quiz.currentQuestionStartTime = Date.now();
 
-    this.server.to(quizCode).emit("question", { quizCode, question, questionNumber });
+    this.server
+      .to(quizCode)
+      .emit("question", { quizCode, question, questionNumber });
 
     const isLast = questionNumber + 1 >= questions.length;
     quiz.pendingTimer = setTimeout(() => {
@@ -131,7 +180,8 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
       if (!stillAlive) return;
       stillAlive.pendingTimer = undefined;
       if (isLast) {
-        const resultArray = this.quizSessionService.processLeaderboard(quizCode);
+        const resultArray =
+          this.quizSessionService.processLeaderboard(quizCode);
         this.server.to(quizCode).emit("endQuiz", resultArray);
         this.quizSessionService.remove(quizCode);
       } else {
@@ -140,21 +190,31 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
     }, QUESTION_DURATION_MS);
   }
 
-    sendLeaderboard(quizCode: string, leaderboard: any) {
-        this.server.to(quizCode).emit("leaderboard", leaderboard);
-    }
+  sendLeaderboard(quizCode: string, leaderboard: any) {
+    this.server.to(quizCode).emit("leaderboard", leaderboard);
+  }
 
-    @SubscribeMessage("createQuizSession")
-    async handleCreateQuizSession(@MessageBody() data: CreateQuizSessionDto, @ConnectedSocket() client: Socket) {
-        const user = client.data.user as User | undefined;
-        if (!user) {
-            client.emit("errorMsg", "authentication required to create a quiz session");
-            return;
-        }
-        const session = await this.quizSessionService.createQuiz(data.quizId, user.email, client.id);
-        client.emit("QuizCreationSuccess", session);
-        return client.emit("createQuizSession", session);
+  @SubscribeMessage("createQuizSession")
+  async handleCreateQuizSession(
+    @MessageBody() data: CreateQuizSessionDto,
+    @ConnectedSocket() client: Socket,
+  ) {
+    const user = client.data.user as User | undefined;
+    if (!user) {
+      client.emit(
+        "errorMsg",
+        "authentication required to create a quiz session",
+      );
+      return;
     }
+    const session = await this.quizSessionService.createQuiz(
+      data.quizId,
+      user.email,
+      client.id,
+    );
+    client.emit("QuizCreationSuccess", session);
+    return client.emit("createQuizSession", session);
+  }
 
   /*   @SubscribeMessage("findOneQuizSession")
      handleFindOneQuizSession(@MessageBody() code: string, @ConnectedSocket() client: Socket): void {
@@ -163,12 +223,18 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
      }
  */
   getScore(validity: boolean, questionStartTime: number): number {
-    const timeLeftMs = Math.max(0, QUESTION_DURATION_MS - (Date.now() - questionStartTime));
+    const timeLeftMs = Math.max(
+      0,
+      QUESTION_DURATION_MS - (Date.now() - questionStartTime),
+    );
     return validity ? (timeLeftMs / 1000) * 10 : 0;
   }
 
   @SubscribeMessage("getAnswer")
-  getAnswer(@MessageBody() data: GetAnswerDto, @ConnectedSocket() client: Socket): void {
+  getAnswer(
+    @MessageBody() data: GetAnswerDto,
+    @ConnectedSocket() client: Socket,
+  ): void {
     const { quizCode, answer, questionNumber } = data;
     const quiz = this.quizSessionService.quizSessions.get(quizCode);
     if (!quiz) {
@@ -180,20 +246,26 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
       client.emit("getQuestion", "invalid request , check question number");
       return;
     }
-    if (questionNumber !== quiz.currentQuestionNumber || quiz.currentQuestionStartTime == null) {
+    if (
+      questionNumber !== quiz.currentQuestionNumber ||
+      quiz.currentQuestionStartTime == null
+    ) {
       // answer arrived for a question that isn't the current one (late, replay, or out-of-order)
       return;
     }
     const question = questions[questionNumber];
-    const player = quiz.players.find(p => p.socketId === client.id);
+    const player = quiz.players.find((p) => p.socketId === client.id);
     if (!player) {
       client.emit("errorMsg", "player not found in this session");
       return;
     }
-    player.score += this.getScore(answer === question.correctAnswer, quiz.currentQuestionStartTime);
+    player.score += this.getScore(
+      answer === question.correctAnswer,
+      quiz.currentQuestionStartTime,
+    );
   }
 
-    endQuiz(quizCode: string, leaderboard: any): void {
-        this.sendLeaderboard(quizCode, leaderboard);
-    }
+  endQuiz(quizCode: string, leaderboard: any): void {
+    this.sendLeaderboard(quizCode, leaderboard);
+  }
 }
