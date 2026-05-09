@@ -14,7 +14,10 @@ describe("JwtStrategy.validate", () => {
       providers: [
         JwtStrategy,
         { provide: getRepositoryToken(User), useValue: userRepo },
-        { provide: ConfigService, useValue: { get: () => "test-secret-very-long-string" } },
+        {
+          provide: ConfigService,
+          useValue: { get: () => "test-secret-very-long-string" },
+        },
       ],
     }).compile();
 

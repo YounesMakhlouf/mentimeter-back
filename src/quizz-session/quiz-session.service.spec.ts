@@ -1,5 +1,8 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { NotFoundException, InternalServerErrorException } from "@nestjs/common";
+import {
+  NotFoundException,
+  InternalServerErrorException,
+} from "@nestjs/common";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { QuizSessionService } from "./quiz-session.service";
 import { QuizSession } from "./entities/quiz-session.entity";
@@ -97,7 +100,9 @@ describe("QuizSessionService", () => {
 
     it("adds a new player on first join", () => {
       const session = seedSession();
-      expect(service.joinQuiz(session.quizCode, "sock-1", "Alice", "ax")).toBe(true);
+      expect(service.joinQuiz(session.quizCode, "sock-1", "Alice", "ax")).toBe(
+        true,
+      );
       expect(session.players).toHaveLength(1);
       expect(session.players[0]).toMatchObject({
         pseudo: "Alice",
@@ -111,7 +116,9 @@ describe("QuizSessionService", () => {
     it("rejects a second join with the same socketId (dedupe)", () => {
       const session = seedSession();
       service.joinQuiz(session.quizCode, "sock-1", "Alice", "ax");
-      expect(service.joinQuiz(session.quizCode, "sock-1", "AliceAgain", "ax")).toBe(false);
+      expect(
+        service.joinQuiz(session.quizCode, "sock-1", "AliceAgain", "ax"),
+      ).toBe(false);
       expect(session.players).toHaveLength(1);
       expect(session.players[0].pseudo).toBe("Alice"); // first wins
     });
@@ -119,7 +126,9 @@ describe("QuizSessionService", () => {
     it("allows different socketIds even with the same pseudo", () => {
       const session = seedSession();
       service.joinQuiz(session.quizCode, "sock-1", "Alice", "ax");
-      expect(service.joinQuiz(session.quizCode, "sock-2", "Alice", "bx")).toBe(true);
+      expect(service.joinQuiz(session.quizCode, "sock-2", "Alice", "bx")).toBe(
+        true,
+      );
       expect(session.players).toHaveLength(2);
     });
   });
@@ -133,9 +142,27 @@ describe("QuizSessionService", () => {
       seedSession({
         quizCode: "222222",
         players: [
-          { pseudo: "low", avatar: "a", score: 50, answers: [], socketId: "s1" },
-          { pseudo: "high", avatar: "b", score: 200, answers: [], socketId: "s2" },
-          { pseudo: "mid", avatar: "c", score: 100, answers: [], socketId: "s3" },
+          {
+            pseudo: "low",
+            avatar: "a",
+            score: 50,
+            answers: [],
+            socketId: "s1",
+          },
+          {
+            pseudo: "high",
+            avatar: "b",
+            score: 200,
+            answers: [],
+            socketId: "s2",
+          },
+          {
+            pseudo: "mid",
+            avatar: "c",
+            score: 100,
+            answers: [],
+            socketId: "s3",
+          },
         ],
       });
 
@@ -192,7 +219,10 @@ describe("QuizSessionService", () => {
     it("cancels any pending timer before deletion", () => {
       const session = seedSession({ quizCode: "777777" });
       const fired = jest.fn();
-      session.pendingTimer = setTimeout(fired, 60_000) as unknown as NodeJS.Timeout;
+      session.pendingTimer = setTimeout(
+        fired,
+        60_000,
+      ) as unknown as NodeJS.Timeout;
 
       service.remove("777777");
 

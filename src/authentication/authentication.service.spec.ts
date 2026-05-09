@@ -53,7 +53,9 @@ describe("AuthenticationService", () => {
       expect(saved.email).toBe("alice@x.com");
       expect(saved.password).not.toBe("hunter22"); // hashed, not plaintext
       // bcrypt's compare confirms the hash actually matches the plaintext
-      await expect(bcrypt.compare("hunter22", saved.password)).resolves.toBe(true);
+      await expect(bcrypt.compare("hunter22", saved.password)).resolves.toBe(
+        true,
+      );
     });
 
     it("returns { email, username } where username is the local part up to first non-alphanumeric", async () => {
@@ -65,7 +67,10 @@ describe("AuthenticationService", () => {
         password: "hunter22",
       })) as { email: string; username: string };
 
-      expect(result).toEqual({ email: "alice123@example.com", username: "alice123" });
+      expect(result).toEqual({
+        email: "alice123@example.com",
+        username: "alice123",
+      });
     });
   });
 
@@ -84,16 +89,23 @@ describe("AuthenticationService", () => {
     });
 
     it("rejects with UnauthorizedException on wrong password (regression: was a `return` not `throw`)", async () => {
-      userRepo.findOneBy.mockResolvedValue(await makeUser("alice@x.com", "hunter22"));
+      userRepo.findOneBy.mockResolvedValue(
+        await makeUser("alice@x.com", "hunter22"),
+      );
 
       await expect(
-        service.login({ email: "alice@x.com", password: "WRONG_BUT_LONG_ENOUGH" }),
+        service.login({
+          email: "alice@x.com",
+          password: "WRONG_BUT_LONG_ENOUGH",
+        }),
       ).rejects.toThrow(UnauthorizedException);
       expect(jwtService.sign).not.toHaveBeenCalled();
     });
 
     it("returns { accessToken, username, email } on success", async () => {
-      userRepo.findOneBy.mockResolvedValue(await makeUser("alice@x.com", "hunter22"));
+      userRepo.findOneBy.mockResolvedValue(
+        await makeUser("alice@x.com", "hunter22"),
+      );
 
       const out = (await service.login({
         email: "alice@x.com",
