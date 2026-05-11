@@ -33,11 +33,7 @@ export class QuizzesService extends CrudService<Quiz> {
     return this.quizRepository.save(quiz);
   }
 
-  /**
-   * Update a quiz's name and/or topic. Only the quiz's owner can edit.
-   * Question editing isn't supported here yet — replacing the questions
-   * array on an existing quiz needs orphan handling for the old rows.
-   */
+  /** Update a quiz's name and/or topic. Only the quiz's owner can edit. */
   async updateQuiz(
     id: string,
     dto: UpdateQuizDto,
