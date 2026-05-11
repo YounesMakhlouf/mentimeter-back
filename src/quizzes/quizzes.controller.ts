@@ -42,12 +42,16 @@ export class QuizzesController {
   }
 
   @Patch(":id")
-  update(@Param("id") id: string, @Body() updateQuizDto: UpdateQuizDto) {
-    return this.quizzesService.update(id, updateQuizDto);
+  update(
+    @Param("id") id: string,
+    @Body() updateQuizDto: UpdateQuizDto,
+    @CurrentUser("email") email: string,
+  ) {
+    return this.quizzesService.updateQuiz(id, updateQuizDto, email);
   }
 
   @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.quizzesService.remove(id);
+  remove(@Param("id") id: string, @CurrentUser("email") email: string) {
+    return this.quizzesService.deleteQuiz(id, email);
   }
 }

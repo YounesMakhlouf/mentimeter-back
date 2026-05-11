@@ -1,9 +1,6 @@
-import { PartialType } from "@nestjs/mapped-types";
+import { PickType, PartialType } from "@nestjs/swagger";
 import { CreateQuizDto } from "./create-quiz.dto";
-import { IsEnum } from "class-validator";
-import { Topic, Topics } from "../topics.enum";
 
-export class UpdateQuizDto extends PartialType(CreateQuizDto) {
-  @IsEnum(Topics)
-  topic?: Topic;
-}
+export class UpdateQuizDto extends PartialType(
+  PickType(CreateQuizDto, ["name", "topic"] as const),
+) {}
