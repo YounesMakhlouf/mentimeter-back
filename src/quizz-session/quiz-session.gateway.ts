@@ -154,6 +154,12 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
       return;
     }
 
+    // Reject host-initiated sendQuestion when no one has joined yet.
+    if (client && quiz.players.length === 0) {
+      client.emit("errorMsg", "cannot start a quiz with no players");
+      return;
+    }
+
     const questions = quiz.quiz.questions;
     const question = questions[questionNumber];
     if (!question) {
