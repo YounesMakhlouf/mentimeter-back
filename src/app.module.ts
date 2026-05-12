@@ -1,8 +1,6 @@
 import { Module } from "@nestjs/common";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
-import { QuestionsModule } from "./questions/questions.module";
-import { OptionsModule } from "./options/options.module";
 import { QuizzesModule } from "./quizzes/quizzes.module";
 import { UsersModule } from "./users/users.module";
 import { TypeOrmModule } from "@nestjs/typeorm";
@@ -19,8 +17,6 @@ import { QuizSessionModule } from "./quizz-session/quiz-session.module";
   imports: [
     UsersModule,
     QuizzesModule,
-    OptionsModule,
-    QuestionsModule,
     ConfigModule.forRoot({ isGlobal: true }), // Other imports
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
