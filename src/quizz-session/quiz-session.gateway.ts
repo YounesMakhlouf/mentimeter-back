@@ -155,8 +155,6 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
     }
 
     // Reject host-initiated sendQuestion when no one has joined yet.
-    // The timer-chain call (no `client`) is exempt — once a question has
-    // gone out, the chain keeps going even if everyone disconnects.
     if (client && quiz.players.length === 0) {
       client.emit("errorMsg", "cannot start a quiz with no players");
       return;
