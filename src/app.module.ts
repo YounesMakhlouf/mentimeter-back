@@ -9,7 +9,6 @@ import { Question } from "./questions/entities/question.entity";
 import { Quiz } from "./quizzes/entities/quiz.entity";
 import { Option } from "./options/entities/option.entity";
 import { AuthenticationModule } from "./authentication/authentication.module";
-import { CommonModule } from "./common/common.module";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { QuizSessionModule } from "./quizz-session/quiz-session.module";
 
@@ -43,7 +42,6 @@ import { QuizSessionModule } from "./quizz-session/quiz-session.module";
       inject: [ConfigService],
     }),
     AuthenticationModule,
-    CommonModule,
     QuizSessionModule,
   ],
   controllers: [AppController],

@@ -45,7 +45,6 @@ describe("QuizSessionService", () => {
       quiz: null as unknown as Quiz,
       quizCode: code,
       owner: null as unknown as User,
-      hasStarted: false,
       players: [],
       ownerSocketId: "host-socket",
       ...overrides,
@@ -109,7 +108,6 @@ describe("QuizSessionService", () => {
         avatar: "ax",
         score: 0,
         socketId: "sock-1",
-        answers: [],
       });
     });
 
@@ -142,27 +140,9 @@ describe("QuizSessionService", () => {
       seedSession({
         quizCode: "222222",
         players: [
-          {
-            pseudo: "low",
-            avatar: "a",
-            score: 50,
-            answers: [],
-            socketId: "s1",
-          },
-          {
-            pseudo: "high",
-            avatar: "b",
-            score: 200,
-            answers: [],
-            socketId: "s2",
-          },
-          {
-            pseudo: "mid",
-            avatar: "c",
-            score: 100,
-            answers: [],
-            socketId: "s3",
-          },
+          { pseudo: "low", avatar: "a", score: 50, socketId: "s1" },
+          { pseudo: "high", avatar: "b", score: 200, socketId: "s2" },
+          { pseudo: "mid", avatar: "c", score: 100, socketId: "s3" },
         ],
       });
 
