@@ -100,11 +100,15 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
     }
     const data: Record<string, unknown> = {};
     this.quizSessionService.findAll().forEach((session, code) => {
-      if (session.owner?.email === user.email) {
-        // pendingTimer is a NodeJS.Timeout (non-serializable); strip it.
-        const { pendingTimer: _t, ...rest } = session;
-        data[code] = rest;
-      }
+      if (session.owner?.email !== user.email) return;
+      // Strip internal-only fields before the wire: pendingTimer isn't
+      // serializable; ownerSocketId / players[].socketId are internal
+      // identifiers the host doesn't need.
+      const { pendingTimer: _t, ownerSocketId: _o, players, ...rest } = session;
+      data[code] = {
+        ...rest,
+        players: players.map(({ socketId: _s, ...p }) => p),
+      };
     });
     return { event: "findAllQuizSession", data };
   }
@@ -145,7 +149,7 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
     if (!quiz) {
       this.server
         .to(quizCode)
-        .emit("error", `can't fetch quiz, it has probably been deleted`);
+        .emit("errorMsg", `can't fetch quiz, it has probably been deleted`);
       return;
     }
     // host-only: client is undefined when invoked by the timer chain, which we trust
@@ -166,7 +170,7 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
       this.server
         .to(quizCode)
         .emit(
-          "error",
+          "errorMsg",
           `an error occurred while retrieving question ${questionNumber}`,
         );
       return;
@@ -196,10 +200,6 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
     }, QUESTION_DURATION_MS);
   }
 
-  sendLeaderboard(quizCode: string, leaderboard: any) {
-    this.server.to(quizCode).emit("leaderboard", leaderboard);
-  }
-
   @SubscribeMessage("createQuizSession")
   async handleCreateQuizSession(
     @MessageBody() data: CreateQuizSessionDto,
@@ -223,12 +223,6 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
     return client.emit("createQuizSession", session);
   }
 
-  /*   @SubscribeMessage("findOneQuizSession")
-     handleFindOneQuizSession(@MessageBody() code: string, @ConnectedSocket() client: Socket): void {
-         const session = this.quizSessionService.findOne(code, this.quizzes);
-         client.emit("sessionDetail", session);
-     }
- */
   getScore(validity: boolean, questionStartTime: number): number {
     const timeLeftMs = Math.max(
       0,
@@ -250,7 +244,7 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
     }
     const questions = quiz.quiz.questions;
     if (questionNumber < 0 || questionNumber >= questions.length) {
-      client.emit("getQuestion", "invalid request , check question number");
+      client.emit("errorMsg", "invalid request, check question number");
       return;
     }
     if (
@@ -275,9 +269,5 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
       answer,
       playerPseudo: player.pseudo,
     });
-  }
-
-  endQuiz(quizCode: string, leaderboard: any): void {
-    this.sendLeaderboard(quizCode, leaderboard);
   }
 }

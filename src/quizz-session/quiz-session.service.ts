@@ -53,12 +53,11 @@ export class QuizSessionService {
       where: { email: ownerId },
     });
     const quizSession: QuizSession = {
-      quiz: quiz,
-      quizCode: quizCode,
-      owner: owner,
-      hasStarted: false,
+      quiz,
+      quizCode,
+      owner,
+      ownerSocketId,
       players: [],
-      ownerSocketId: ownerSocketId,
     };
     this.quizSessions.set(quizCode, quizSession);
     return quizCode;
@@ -75,22 +74,11 @@ export class QuizSessionService {
     if (quiz.players.some((p) => p.socketId === socketId)) return false;
     quiz.players.push({
       pseudo: playerName,
-      avatar: avatar,
-      answers: [],
+      avatar,
       score: 0,
       socketId,
     });
     return true;
-  }
-
-  startQuiz(quizCode: string): any[] {
-    const quizSession: QuizSession = this.quizSessions.get(quizCode);
-    const quiz = quizSession.quiz;
-    if (quiz) {
-      quizSession.hasStarted = true;
-      return quiz.questions; // Send the questions to all players
-    }
-    throw new NotFoundException(`Quiz session with code ${quizCode} not found`);
   }
 
   processLeaderboard(quizCode: string) {
