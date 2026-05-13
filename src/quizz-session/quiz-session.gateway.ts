@@ -270,9 +270,6 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
       answer === question.correctAnswer,
       quiz.currentQuestionStartTime,
     );
-    // Live feed for the host's presenter view (bar chart, etc.). The host
-    // tallies counts client-side from this stream rather than the server
-    // maintaining aggregate state.
     this.server.to(quiz.ownerSocketId).emit("answerReceived", {
       questionNumber,
       answer,
