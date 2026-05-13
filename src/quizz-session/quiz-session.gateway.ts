@@ -218,6 +218,7 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
       user.email,
       client.id,
     );
+    client.join(session);
     client.emit("QuizCreationSuccess", session);
     return client.emit("createQuizSession", session);
   }
@@ -269,6 +270,11 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
       answer === question.correctAnswer,
       quiz.currentQuestionStartTime,
     );
+    this.server.to(quiz.ownerSocketId).emit("answerReceived", {
+      questionNumber,
+      answer,
+      playerPseudo: player.pseudo,
+    });
   }
 
   endQuiz(quizCode: string, leaderboard: any): void {
