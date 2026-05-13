@@ -6,18 +6,19 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { User } from "../../users/entities/user.entity";
 import { PayloadInterface } from "../Interfaces/payload.interface";
+import { EnvConfig } from "../../config/env";
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
-    config: ConfigService,
+    config: ConfigService<EnvConfig, true>,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: config.get<string>("SECRET"),
+      secretOrKey: config.get("SECRET", { infer: true }),
     });
   }
 

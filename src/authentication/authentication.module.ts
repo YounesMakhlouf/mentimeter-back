@@ -7,6 +7,7 @@ import { User } from "../users/entities/user.entity";
 import { PassportModule } from "@nestjs/passport";
 import { JwtModule } from "@nestjs/jwt";
 import { JwtStrategy } from "./strategies/passport-jwt-strategy";
+import { EnvConfig } from "../config/env";
 
 @Module({
   controllers: [AuthenticationController],
@@ -19,8 +20,8 @@ import { JwtStrategy } from "./strategies/passport-jwt-strategy";
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        secret: config.get<string>("SECRET"),
+      useFactory: (config: ConfigService<EnvConfig, true>) => ({
+        secret: config.get("SECRET", { infer: true }),
         signOptions: { expiresIn: 3600 },
       }),
     }),
