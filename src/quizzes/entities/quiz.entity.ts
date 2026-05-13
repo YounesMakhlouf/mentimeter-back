@@ -1,14 +1,16 @@
 import {
   Column,
+  CreateDateColumn,
   DeleteDateColumn,
   Entity,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from "typeorm";
 import { User } from "../../users/entities/user.entity";
 import { Question } from "../../questions/entities/question.entity";
-import { Topic } from "../topics.enum";
+import { Topic, Topics } from "../topics.enum";
 
 @Entity()
 export class Quiz {
@@ -18,8 +20,8 @@ export class Quiz {
   @Column()
   name: string;
 
-  @DeleteDateColumn()
-  deletedAt: Date;
+  @Column({ type: "enum", enum: Object.values(Topics) })
+  topic: Topic;
 
   @ManyToOne(() => User, (user: User) => user.quizzes)
   user: User;
@@ -30,10 +32,12 @@ export class Quiz {
   })
   questions: Question[];
 
-  @Column()
-  topic: Topic;
+  @CreateDateColumn()
+  createdAt: Date;
 
-  getId() {
-    return this.id;
-  }
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @DeleteDateColumn()
+  deletedAt: Date;
 }

@@ -27,6 +27,7 @@ import { CreateQuizSessionDto } from "./dto/create-quiz-session.dto";
 import { JoinQuizDto } from "./dto/join-quiz.dto";
 import { SendQuestionDto } from "./dto/send-question.dto";
 import { GetAnswerDto } from "./dto/get-answer.dto";
+import { EnvConfig } from "../config/env";
 
 const QUESTION_DURATION_MS = 10_000;
 
@@ -46,7 +47,7 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
   constructor(
     private readonly quizSessionService: QuizSessionService,
     private readonly jwtService: JwtService,
-    private readonly config: ConfigService,
+    private readonly config: ConfigService<EnvConfig, true>,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
   ) {}
 
@@ -73,9 +74,7 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
       try {
         const payload = await this.jwtService.verifyAsync<PayloadInterface>(
           token,
-          {
-            secret: this.config.get<string>("SECRET"),
-          },
+          { secret: this.config.get("SECRET", { infer: true }) },
         );
         const user = await this.userRepository.findOneBy({
           email: payload.email,

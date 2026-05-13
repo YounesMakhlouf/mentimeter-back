@@ -1,10 +1,12 @@
 import {
   Column,
+  CreateDateColumn,
   DeleteDateColumn,
   Entity,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from "typeorm";
 import { Quiz } from "../../quizzes/entities/quiz.entity";
 import { Option } from "../../options/entities/option.entity";
@@ -17,8 +19,8 @@ export class Question {
   @Column()
   question: string;
 
-  @DeleteDateColumn()
-  deletedAt: Date;
+  @Column()
+  correctAnswer: string;
 
   @ManyToOne(() => Quiz, (quiz: Quiz) => quiz.questions)
   quiz: Quiz;
@@ -29,6 +31,12 @@ export class Question {
   })
   options: Option[];
 
-  @Column({ nullable: false })
-  correctAnswer: string;
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @DeleteDateColumn()
+  deletedAt: Date;
 }
