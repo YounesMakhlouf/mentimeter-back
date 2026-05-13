@@ -35,7 +35,7 @@ import { QuizSessionModule } from "./quizz-session/quiz-session.module";
           // only outside production.
           synchronize:
             !isProduction &&
-            configService.get<boolean>("DATABASE_SYNCHRONIZE") === true,
+            configService.get<string>("DATABASE_SYNCHRONIZE") === "true",
           migrations: [__dirname + "/migrations/*.{ts,js}"],
         };
       },

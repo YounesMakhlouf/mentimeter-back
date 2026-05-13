@@ -1,9 +1,11 @@
 import {
   Column,
+  CreateDateColumn,
   DeleteDateColumn,
   Entity,
   ManyToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from "typeorm";
 import { Question } from "../../questions/entities/question.entity";
 
@@ -15,11 +17,18 @@ export class Option {
   @Column()
   label: string;
 
-  @DeleteDateColumn()
-  deletedAt: Date;
-
   @Column()
   isCorrect: boolean;
+
   @ManyToOne(() => Question, (question: Question) => question.options)
   question: Question;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @DeleteDateColumn()
+  deletedAt: Date;
 }
