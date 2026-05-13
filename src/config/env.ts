@@ -10,9 +10,6 @@ export interface EnvConfig {
   DATABASE_PASSWORD: string;
   DATABASE_NAME: string;
   DATABASE_SYNCHRONIZE: boolean;
-  // Comma-separated list of allowed CORS origins. Optional; if unset or
-  // empty the server is open (`*`). In production, leaving this unset
-  // means any browser on the internet can call the API — set it.
   CORS_ORIGINS: string[];
 }
 

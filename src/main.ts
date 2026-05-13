@@ -15,8 +15,6 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService<EnvConfig, true>);
 
-  // CORS: explicit allowlist via env. If unset (or empty), open in dev,
-  // logged warning in prod so misconfiguration surfaces.
   const origins = config.get("CORS_ORIGINS", { infer: true });
   if (origins.length > 0) {
     app.enableCors({ origin: origins });
@@ -30,7 +28,6 @@ async function bootstrap() {
     app.enableCors();
   }
 
-  // Request log: method, path, status, duration. Fires on response 'finish'.
   const httpLogger = new Logger("HTTP");
   app.use((req: Request, res: Response, next: NextFunction) => {
     const start = Date.now();
@@ -45,8 +42,6 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
-  // Let providers receive onApplicationShutdown / onModuleDestroy on SIGTERM,
-  // so in-flight work can drain instead of being killed mid-flight.
   app.enableShutdownHooks();
 
   const swaggerConfig = new DocumentBuilder()
