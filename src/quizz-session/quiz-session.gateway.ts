@@ -170,6 +170,14 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
       return;
     }
 
+    // Reject host-initiated replays for the question already in progress.
+    // Re-broadcasting would reset currentQuestionStartTime and wipe
+    // answeredForCurrent, letting players score the same question twice.
+    if (client && quiz.currentQuestionNumber === questionNumber) {
+      client.emit("errorMsg", "question already in progress");
+      return;
+    }
+
     const questions = quiz.quiz.questions;
     const question = questions[questionNumber];
     if (!question) {
