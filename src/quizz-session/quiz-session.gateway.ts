@@ -270,9 +270,7 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
       client.emit("errorMsg", "player not found in this session");
       return;
     }
-    // One answer per player per question. Silent drop on duplicate —
-    // matches the stale-question-number drop above. The FE keeps its
-    // "Locked in!" affordance; this just makes correctness server-side.
+    // One answer per player per question
     if (quiz.answeredForCurrent?.has(client.id)) return;
     quiz.answeredForCurrent?.add(client.id);
 
