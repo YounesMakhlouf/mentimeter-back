@@ -6,8 +6,7 @@ import { ApiOperation, ApiTags } from "@nestjs/swagger";
 export class AppController {
   @ApiOperation({
     summary: "Liveness probe",
-    description:
-      "Public, no auth. Returns 200 with a tiny status payload.",
+    description: "Public, no auth. Returns 200 with a tiny status payload.",
   })
   @Get("health")
   health() {
