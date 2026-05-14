@@ -179,9 +179,12 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
     quiz.currentQuestionNumber = questionNumber;
     quiz.currentQuestionStartTime = Date.now();
 
-    this.server
-      .to(quizCode)
-      .emit("question", { quizCode, question, questionNumber });
+    this.server.to(quizCode).emit("question", {
+      quizCode,
+      question,
+      questionNumber,
+      totalQuestions: questions.length,
+    });
 
     const isLast = questionNumber + 1 >= questions.length;
     quiz.pendingTimer = setTimeout(() => {
