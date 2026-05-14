@@ -55,8 +55,6 @@ Required keys (parsed and typed by `src/config/env.ts`; the app fails to boot on
 | `DATABASE_SYNCHRONIZE` | `true` for dev-only entity auto-sync; keep `false` and use migrations |
 | `CORS_ORIGINS` | Comma-separated allowlist. Empty = wildcard (warned in production) |
 
-`.env` is gitignored — never commit it.
-
 ## Running the application
 
 ```bash
@@ -70,7 +68,7 @@ npm run start:prod  # node dist/main
 
 ## Database & migrations
 
-Schema changes go through TypeORM migrations — `synchronize` is off by default and is ignored entirely in production.
+Schema changes go through TypeORM migrations. `synchronize` is off by default and is ignored entirely in production.
 
 ```bash
 npm run migration:generate -- src/migrations/<Name>   # diff entities against the live DB
@@ -78,23 +76,23 @@ npm run migration:run                                 # apply pending migrations
 npm run migration:revert                              # roll back the most recent
 ```
 
-The CLI uses a standalone `src/data-source.ts`; the runtime connection is wired in `app.module.ts`. Migrations are **not** auto-applied at boot — production deploys must call `migration:run` explicitly.
+The CLI uses a standalone `src/data-source.ts`; the runtime connection is wired in `app.module.ts`. Migrations are **not** auto-applied at boot. production deploys must call `migration:run` explicitly.
 
 ## Architecture
 
 ### Network surfaces
 
-- **Port 3000** — HTTP REST API. Global `ValidationPipe` (whitelist + transform), global `ClassSerializerInterceptor`, CORS allowlist from `CORS_ORIGINS`, request logger, Swagger at `/document`.
-- **Port 3001** — `QuizSessionGateway` over Socket.IO. The live game loop.
+- **Port 3000**: HTTP REST API. Global `ValidationPipe` (whitelist + transform), global `ClassSerializerInterceptor`, CORS allowlist from `CORS_ORIGINS`, request logger, Swagger at `/document`.
+- **Port 3001**: `QuizSessionGateway` over Socket.IO. The live game loop.
 
 ### Domain model
 
-`User 1—N Quiz 1—N Question 1—N Option`. All entities use `@DeleteDateColumn` (soft delete). `Quiz.questions` and `Question.options` load eagerly; options cascade on save.
+`User 1 - N Quiz 1 - N Question 1 - N Option`. All entities use `@DeleteDateColumn` (soft delete). `Quiz.questions` and `Question.options` load eagerly; options cascade on save.
 
 ### Authentication
 
 - `POST /authentication/register` and `POST /authentication/login`. Login returns `{ accessToken, username, email }`.
-- All non-auth controllers are guarded by `JwtAuthGuard` — send `Authorization: Bearer <jwt>`.
+- All non-auth controllers are guarded by `JwtAuthGuard`. send `Authorization: Bearer <jwt>`.
 - `POST /quizzes` derives the owner from the JWT via `@CurrentUser('email')`; a `userEmail` body field is ignored.
 - WebSocket auth runs as a Socket.IO middleware in `afterInit` so `socket.data.user` is set before any message handler can fire. Missing token = anonymous (player flow). Invalid/expired token = rejected.
 

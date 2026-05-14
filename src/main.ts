@@ -21,7 +21,7 @@ async function bootstrap() {
   } else {
     if (config.get("NODE_ENV", { infer: true }) === "production") {
       Logger.warn(
-        "CORS_ORIGINS is empty in production — every origin can call the API.",
+        "CORS_ORIGINS is empty in production: every origin can call the API.",
         "Bootstrap",
       );
     }

@@ -34,14 +34,14 @@ describe("JwtStrategy.validate", () => {
     expect(userRepo.findOneBy).toHaveBeenCalledWith({ email: "ghost@x.com" });
   });
 
-  it("returns the User entity (with password still on the instance — @Exclude strips it on serialization, not in memory)", async () => {
+  it("returns the User entity (with password still on the instance. @Exclude strips it on serialization, not in memory)", async () => {
     const user = { id: "u1", email: "alice@x.com", password: "hashed" } as User;
     userRepo.findOneBy.mockResolvedValue(user);
 
     const result = await strategy.validate({ email: "alice@x.com" });
 
     expect(result).toBe(user);
-    // password lives on the instance — ClassSerializerInterceptor + @Exclude
+    // password lives on the instance. ClassSerializerInterceptor + @Exclude
     // remove it on response, not here.
     expect((result as User).password).toBe("hashed");
   });
