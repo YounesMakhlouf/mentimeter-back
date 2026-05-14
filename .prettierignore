@@ -1,0 +1,7 @@
+dist
+node_modules
+coverage
+
+# TypeORM-generated migrations: leave the CLI's output formatting alone
+# so eslint and prettier don't fight over generated SQL template literals.
+src/migrations
