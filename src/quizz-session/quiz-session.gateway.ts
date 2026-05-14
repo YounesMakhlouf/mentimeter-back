@@ -100,10 +100,17 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
     const data: Record<string, unknown> = {};
     this.quizSessionService.findAll().forEach((session, code) => {
       if (session.owner?.email !== user.email) return;
-      // Strip internal-only fields before the wire: pendingTimer isn't
-      // serializable; ownerSocketId / players[].socketId are internal
-      // identifiers the host doesn't need.
-      const { pendingTimer: _t, ownerSocketId: _o, players, ...rest } = session;
+      // Strip internal-only fields before the wire: pendingTimer and
+      // answeredForCurrent aren't JSON-serializable (Timer / Set);
+      // ownerSocketId and players[].socketId are internal handles the
+      // host doesn't need.
+      const {
+        pendingTimer: _t,
+        answeredForCurrent: _a,
+        ownerSocketId: _o,
+        players,
+        ...rest
+      } = session;
       data[code] = {
         ...rest,
         players: players.map(({ socketId: _s, ...p }) => p),
@@ -163,6 +170,14 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
       return;
     }
 
+    // Reject host-initiated replays for the question already in progress.
+    // Re-broadcasting would reset currentQuestionStartTime and wipe
+    // answeredForCurrent, letting players score the same question twice.
+    if (client && quiz.currentQuestionNumber === questionNumber) {
+      client.emit("errorMsg", "question already in progress");
+      return;
+    }
+
     const questions = quiz.quiz.questions;
     const question = questions[questionNumber];
     if (!question) {
@@ -178,6 +193,7 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
     this.quizSessionService.cancelPendingTimer(quizCode);
     quiz.currentQuestionNumber = questionNumber;
     quiz.currentQuestionStartTime = Date.now();
+    quiz.answeredForCurrent = new Set<string>();
 
     this.server.to(quizCode).emit("question", {
       quizCode,
@@ -262,6 +278,10 @@ export class QuizSessionGateway implements OnGatewayInit, OnGatewayDisconnect {
       client.emit("errorMsg", "player not found in this session");
       return;
     }
+    // One answer per player per question
+    if (quiz.answeredForCurrent?.has(client.id)) return;
+    quiz.answeredForCurrent?.add(client.id);
+
     player.score += this.getScore(
       answer === question.correctAnswer,
       quiz.currentQuestionStartTime,
