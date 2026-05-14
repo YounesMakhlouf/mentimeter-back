@@ -1,6 +1,5 @@
 import { Module } from "@nestjs/common";
 import { AppController } from "./app.controller";
-import { AppService } from "./app.service";
 import { QuizzesModule } from "./quizzes/quizzes.module";
 import { UsersModule } from "./users/users.module";
 import { TypeOrmModule, TypeOrmModuleOptions } from "@nestjs/typeorm";
@@ -43,6 +42,5 @@ import { EnvConfig, loadEnv } from "./config/env";
     QuizSessionModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

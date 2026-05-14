@@ -10,6 +10,7 @@ export interface EnvConfig {
   DATABASE_PASSWORD: string;
   DATABASE_NAME: string;
   DATABASE_SYNCHRONIZE: boolean;
+  CORS_ORIGINS: string[];
 }
 
 function required(raw: Record<string, unknown>, key: keyof EnvConfig): string {
@@ -41,5 +42,11 @@ export function loadEnv(raw: Record<string, unknown>): EnvConfig {
     DATABASE_PASSWORD: required(raw, "DATABASE_PASSWORD"),
     DATABASE_NAME: required(raw, "DATABASE_NAME"),
     DATABASE_SYNCHRONIZE: raw.DATABASE_SYNCHRONIZE === "true",
+    CORS_ORIGINS:
+      typeof raw.CORS_ORIGINS === "string" && raw.CORS_ORIGINS.length > 0
+        ? raw.CORS_ORIGINS.split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [],
   };
 }
